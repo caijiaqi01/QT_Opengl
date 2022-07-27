@@ -223,7 +223,7 @@ void OpenglMathMode::InitBuffer()
 	vertexBuffer->allocate(&vertices[0], sizeof(GL_FLOAT) * vertices.size());
 	vertexBuffer->setUsagePattern(QGLBuffer::StaticDraw);
 	shader.setAttributeBuffer("aPos", GL_FLOAT, 0, 3, 6 * sizeof(GL_FLOAT));
-	shader.setAttributeBuffer("vertexNormal", GL_FLOAT, 3, 3, 6 * sizeof(GL_FLOAT));
+	shader.setAttributeBuffer("vertexNormal", GL_FLOAT, 3 * sizeof(GL_FLOAT), 3, 6 * sizeof(GL_FLOAT));
 	shader.setUniformValue("lightPosition", lightPosition);
 	shader.setUniformValue("lightAmbient", lightAmbient);
 	shader.setUniformValue("lightDiffuse", lightDiffuse);
@@ -301,18 +301,27 @@ void OpenglMathMode::calculatXYZ()
 
 	uint  i, j, deplacement = 6 * step;
 	float caa, bab, cab, baa, ba, ca, b4;
+
 	for (i = 0; i+1 < step; i++) {
 		for (j = 0; j+1 < step; j++) {
-			caa = vertices[(i + 1) * deplacement + j * 6  + 1] - vertices[i * deplacement + j * 6 + 1];
-			bab = vertices[i * deplacement + (j + 1) * 6 + 2] - vertices[i * deplacement + j * 6 + 2];
-			cab = vertices[(i + 1) * deplacement + j * 6 + 2] - vertices[i * deplacement + j * 6 + 2];
-			baa = vertices[i * deplacement + (j + 1) * 6 + 1] - vertices[i * deplacement + j * 6 + 1];
-			ba = vertices[i * deplacement + (j + 1) * 6 + 0] - vertices[i * deplacement + j * 6 + 0];
-			ca = vertices[(i + 1) * deplacement + j * 6 + 0] - vertices[i * deplacement + j * 6 + 0];
+			caa = vertices[(i + 1) * deplacement + j * 6  + 1] - vertices[i * deplacement + j * 6 + 1]; //y1
+			bab = vertices[i * deplacement + (j + 1) * 6 + 2] - vertices[i * deplacement + j * 6 + 2];  //z2
+			cab = vertices[(i + 1) * deplacement + j * 6 + 2] - vertices[i * deplacement + j * 6 + 2];  //z1
+			baa = vertices[i * deplacement + (j + 1) * 6 + 1] - vertices[i * deplacement + j * 6 + 1];  //y2
+			ba = vertices[i * deplacement + (j + 1) * 6 + 0] - vertices[i * deplacement + j * 6 + 0];   //x2
+			ca = vertices[(i + 1) * deplacement + j * 6 + 0] - vertices[i * deplacement + j * 6 + 0];   //x1
 			vertices[i * deplacement + j * 6 + 3] = caa * bab - cab * baa;
 			vertices[i * deplacement + j * 6 + 4] = cab * ba - ca * bab;
 			vertices[i * deplacement + j * 6 + 5] = ca * baa - caa * ba;
-			b4 = sqrt((vertices[i * deplacement + j * 6 + 4] * vertices[i * deplacement + j * 6 + 3]) +
+
+			if (vertices[i * deplacement + j * 6 + 5] < 0)
+			{
+				vertices[i * deplacement + j * 6 + 3] = -vertices[i * deplacement + j * 6 + 3];
+				vertices[i * deplacement + j * 6 + 4] = -vertices[i * deplacement + j * 6 + 4];
+				vertices[i * deplacement + j * 6 + 5] = -vertices[i * deplacement + j * 6 + 5];
+			}
+
+			b4 = sqrt((vertices[i * deplacement + j * 6 + 3] * vertices[i * deplacement + j * 6 + 3]) +
 				(vertices[i * deplacement + j * 6 + 4] * vertices[i * deplacement + j * 6 + 4]) +
 				(vertices[i * deplacement + j * 6 + 5] * vertices[i * deplacement + j * 6 + 5]));
 			if (b4 < float(0.000001))  b4 = float(0.000001);
@@ -322,6 +331,8 @@ void OpenglMathMode::calculatXYZ()
 			vertices[i * deplacement + j * 6 + 5] /= b4;
 		}
 	}
+
+	int a = 0;
 }
 
 
