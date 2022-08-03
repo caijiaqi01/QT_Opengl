@@ -1,5 +1,6 @@
 #include "openglmathmode.h"
 #include "ui_openglmathmode.h"
+#include<sstream>
 #include <cmath>
 
 //gl_Position = matrixModelViewProjection * vec4(vertexPosition, 1.0);\n\
@@ -24,7 +25,7 @@ QString vertexShaderSource =
         esVertex = vec3(matrixModelView * vec4(aPos, 1.0));\n\
 		esNormal = vec3(matrixNormal * vec4(vertexNormal, 1.0)); \n\
 		//color = vertexColor; \n\
-		color = vec4(1.0f, 1.0f, 0.0f, 1.0f); \n\
+		color = vec4(0.0f, 1.0f, 0.0f, 1.0f); \n\
 		v_position = -matrixModelView * vec4(aPos, 1.0); \n\
 		gl_Position = matrixModelViewProjection * vec4(aPos, 1.0);\n\
 	}";
@@ -70,7 +71,7 @@ void main()\n\
 	vec3 light;\n\
 	if (lightPosition.w == 0.0)\n\
 	{\n\
-		light = normalize(lightPosition.xyz);\n\
+		light = normalize(-lightPosition.xyz);\n\
 	}\n\
 	else\n\
 	{\n\
@@ -81,11 +82,13 @@ void main()\n\
 	vec3 view = normalize(-esVertex);\n\
 	vec3 halfv = normalize(light + view);\n\
 	vec4 fragColor = lightAmbient * color1;\n\
-	float dotNL = max(dot(normal, light), 0.0);\n\
-	fragColor += lightDiffuse * color1 * dotNL;// add diffuse\n\
+	float dotNL = max(dot(normal, light), 0.0f);\n\
+	fragColor += lightDiffuse * dotNL * color1; // add diffuse\n\
+	//FragColor = fragColor;\n\
 	float dotNH = max(dot(normal, halfv), 0.0);\n\
+	FragColor = vec4(pow(dotNH, shininess), 0.0, 0.0, 1.0f);\n\
 	fragColor += (pow(dotNH, shininess) * lightSpecular) * color1;\n\
-	FragColor = fragColor;\n\
+	//FragColor = fragColor;\n\
 }";
 
 //顶点数组
@@ -301,24 +304,33 @@ void OpenglMathMode::calculatXYZ()
 
 	uint  i, j, deplacement = 6 * step;
 	float caa, bab, cab, baa, ba, ca, b4;
-
 	for (i = 0; i+1 < step; i++) {
 		for (j = 0; j+1 < step; j++) {
-			caa = vertices[(i + 1) * deplacement + j * 6  + 1] - vertices[i * deplacement + j * 6 + 1]; //y1
-			bab = vertices[i * deplacement + (j + 1) * 6 + 2] - vertices[i * deplacement + j * 6 + 2];  //z2
-			cab = vertices[(i + 1) * deplacement + j * 6 + 2] - vertices[i * deplacement + j * 6 + 2];  //z1
-			baa = vertices[i * deplacement + (j + 1) * 6 + 1] - vertices[i * deplacement + j * 6 + 1];  //y2
-			ba = vertices[i * deplacement + (j + 1) * 6 + 0] - vertices[i * deplacement + j * 6 + 0];   //x2
-			ca = vertices[(i + 1) * deplacement + j * 6 + 0] - vertices[i * deplacement + j * 6 + 0];   //x1
+			/*
+				A
+
+				B    C
+				右手定则得出法向量
+			    AB = A - B
+				BC = B - C	
+			*/
+			caa = vertices[(i + 1) * deplacement + j * 6 + 1] - vertices[i * deplacement + j * 6 + 1]; //y1    A.y - B.y
+			bab = vertices[i * deplacement + j * 6 + 2] - vertices[i * deplacement + (j + 1) * 6 + 2];  //z2   B.z - C.z
+			cab = vertices[(i + 1) * deplacement + j * 6 + 2] - vertices[i * deplacement + j * 6 + 2];  //z1   A.z - B.z
+			baa = vertices[i * deplacement + j * 6 + 1] - vertices[i * deplacement + (j + 1) * 6 + 1];  //y2   B.y - C.y
+			ba = vertices[i * deplacement + j * 6 + 0] - vertices[i * deplacement + (j + 1) * 6 + 0];   //x2   B.x - C.x
+			ca = vertices[(i + 1) * deplacement + j * 6 + 0] - vertices[i * deplacement + j * 6 + 0];   //x1   A.x - B.x
+
 			vertices[i * deplacement + j * 6 + 3] = caa * bab - cab * baa;
 			vertices[i * deplacement + j * 6 + 4] = cab * ba - ca * bab;
 			vertices[i * deplacement + j * 6 + 5] = ca * baa - caa * ba;
 
+			//保证深度方向向外    法线计算有错误，方向反了
 			if (vertices[i * deplacement + j * 6 + 5] < 0)
 			{
-				vertices[i * deplacement + j * 6 + 3] = -vertices[i * deplacement + j * 6 + 3];
-				vertices[i * deplacement + j * 6 + 4] = -vertices[i * deplacement + j * 6 + 4];
-				vertices[i * deplacement + j * 6 + 5] = -vertices[i * deplacement + j * 6 + 5];
+				//vertices[i * deplacement + j * 6 + 3] = -vertices[i * deplacement + j * 6 + 3];
+				//vertices[i * deplacement + j * 6 + 4] = -vertices[i * deplacement + j * 6 + 4];
+				//vertices[i * deplacement + j * 6 + 5] = -vertices[i * deplacement + j * 6 + 5];
 			}
 
 			b4 = sqrt((vertices[i * deplacement + j * 6 + 3] * vertices[i * deplacement + j * 6 + 3]) +
@@ -329,6 +341,22 @@ void OpenglMathMode::calculatXYZ()
 			vertices[i * deplacement + j * 6 + 3] /= b4;
 			vertices[i * deplacement + j * 6 + 4] /= b4;
 			vertices[i * deplacement + j * 6 + 5] /= b4;
+/*
+			std::ostringstream oss;
+			oss << vertices[i * deplacement + j * 6 + 3];
+			std::string str(oss.str());
+			normal1.push_back("x:  " + str);
+
+			std::ostringstream oss1;
+			oss1 << vertices[i * deplacement + j * 6 + 4];
+			str = oss1.str();
+			normal1.push_back("y:  " + str);
+
+			std::ostringstream oss2;
+			oss2 << vertices[i * deplacement + j * 6 + 5];
+			str = oss2.str();
+			normal1.push_back("z:  " + str);
+			*/
 		}
 	}
 
