@@ -23,9 +23,9 @@ public:
     ~OpenglMathMode();
 
 protected:
-	void initializeGL();             //³õÊ¼»¯OpenGL
-	void resizeGL(int w, int h);     //µ÷ÕûoeenGLµÄÏÔÊ¾´°¿Ú
-	void paintGL();                  //»æÖÆopenglÍ¼Ïñ
+	void initializeGL();             //åˆå§‹åŒ–OpenGL
+	void resizeGL(int w, int h);     //è°ƒæ•´oeenGLçš„æ˜¾ç¤ºçª—å£
+	void paintGL();                  //ç»˜åˆ¶openglå›¾åƒ
 
 private:
 	void InitShader();
@@ -46,14 +46,24 @@ private:
 	QMatrix4x4 matrixNormalx;
 	QMatrix4x4 matrixViewx;
 
-	float cameraDistance = 11.4f;       //Ïà»úÎ»ÖÃ
+	//ç›¸æœºä½ç½®
+	float cameraDistance = 11.4f;
 	QQuaternion rotation = QQuaternion::fromAxisAndAngle(QVector3D(1.0, 0.0, 0.0), 270) *
 		QQuaternion::fromAxisAndAngle(QVector3D(0.0, 0.0, 1.0), 225) *
-		QQuaternion::fromAxisAndAngle(QVector3D(1.0, -1.0, 0.0), -29);   //Ğı×ª¾ØÕó
+		QQuaternion::fromAxisAndAngle(QVector3D(1.0, -1.0, 0.0), -29);   //æ—‹è½¬çŸ©é˜µ
 	QQuaternion rotationx;
 	QQuaternion rotationy;
 	QQuaternion rotationz;
 	QQuaternion oldRotation = rotation;
+
+	//ç¯å…‰
+	QVector4D lightPosition = { 2.0f, 0.0f, 0.0f, 1.0f };  //å…‰ç…§çš„æ–¹å‘
+	QVector4D lightAmbient = { 0.5f, 0.5f, 0.5f, 0.1f };//{0.4f, 0.4f, 0.4f, 0.1};
+	QVector4D lightDiffuse = { 0.8f, 0.8f, 0.8f, 1.0f };
+	QVector4D lightSpecular = { 0.5f, 0.5f, 0.5f, 0.1f };//{0.4f, 0.4f, 0.4f, 0.1};
+	QVector4D frontColor = { 0.72f, 0.5f, 0.1f, 1.0f };
+	QVector4D backColor = { 0.1f, 0.7f, 0.2f, 1.0f };
+	int shininessVal = 20;   //é«˜å…‰å°–é”ç¨‹åº¦çš„æŒ‡æ•°å€¼
 
 	GLint uniformFrontColor;
 	GLint uniformBackColor;
