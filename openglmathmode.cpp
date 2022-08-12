@@ -84,10 +84,17 @@ void main()\n\
 	vec4 fragColor = lightAmbient * color1;\n\
 	float dotNL = max(dot(normal, light), 0.0f);\n\
 	fragColor += lightDiffuse * dotNL * color1; // add diffuse\n\
-	//FragColor = fragColor;\n\
 	float dotNH = max(dot(normal, halfv), 0.0);\n\
-	FragColor = vec4(pow(dotNH, shininess), 0.0, 0.0, 1.0f);\n\
-	fragColor += (pow(dotNH, shininess) * lightSpecular) * color1;\n\
+	vec3 LightReflect = normalize(reflect(halfv, normal));\n\
+	float SpecularFactor = dot(vec3(0.0f, 0.0f, 1.0f), -LightReflect);\n\
+	//FragColor = vec4(SpecularFactor, 0, 0, 1.0);;\n\
+	//vec4 SpecularColor = vec4(1.0, 0, 0, 1.0);\n\
+	if (SpecularFactor > 0) {\n\
+		SpecularFactor = pow(SpecularFactor, 20.0f); \n\
+		fragColor += lightSpecular * 1.0f * SpecularFactor; \n\
+	}\n\
+	FragColor = fragColor;\n\
+	//fragColor += (pow(dotNH, shininess) * lightSpecular) * color1;\n\
 	//FragColor = fragColor;\n\
 }";
 
