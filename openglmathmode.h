@@ -7,6 +7,7 @@
 #include <QtOpenGL\QGLShader>
 #include <QtOpenGL\QGLBuffer>
 #include <QtOpenGL\QGLShaderProgram>
+#include <QOpenGLTexture>
 
 #define PI (double(314159265) / double(100000000))
 
@@ -39,8 +40,10 @@ private:
 	Ui::OpenglMathMode* ui;
 
 	QGLShaderProgram shader;
-	QGLBuffer* vertexBuffer;
-	QGLBuffer* indexBuffer;
+	QGLBuffer* vertexBuffer; //顶点坐标
+	QGLBuffer* indexBuffer; //顶点索引
+	QGLBuffer* uvBuffer;   //纹理贴图缓冲区
+	QOpenGLTexture* m_texture;  //纹理图片
 	QMatrix4x4 matrixProjectionx;
 	QMatrix4x4 matrixModelViewProjectionx;
 	QMatrix4x4 matrixNormalx;
@@ -63,7 +66,7 @@ private:
 	QVector4D lightSpecular = { 0.5f, 0.5f, 0.5f, 0.1f };//{0.4f, 0.4f, 0.4f, 0.1};
 	QVector4D frontColor = { 0.72f, 0.5f, 0.1f, 1.0f };
 	QVector4D backColor = { 0.1f, 0.7f, 0.2f, 1.0f };
-	int shininessVal = 20;   //高光尖锐程度的指数值
+	float shininessVal = 20.0f;   //高光尖锐程度的指数值
 
 	GLint uniformFrontColor;
 	GLint uniformBackColor;
