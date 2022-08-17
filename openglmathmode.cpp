@@ -12,10 +12,12 @@ QString vertexShaderSource =
 	layout (location = 0) in vec3 aPos;\n\
     // varyings (output) 输出给片段着色器\n\
 	varying vec3 esVertex, esNormal;\n\
+	varying vec2 uv; \n\
 	varying vec4 color;\n\
 	varying vec4 v_position;\n\
 	attribute vec3 vertexPosition;\n\
     attribute vec3 vertexNormal;\n\
+	attribute vec2 uvVertex;\n\
 	attribute vec4 vertexColor;\n\
 	uniform mat4 matrixNormal;\n\
     uniform mat4 matrixModelView;\n\
@@ -28,6 +30,7 @@ QString vertexShaderSource =
 		color = vec4(0.0f, 1.0f, 0.0f, 1.0f); \n\
 		v_position = -matrixModelView * vec4(aPos, 1.0); \n\
 		gl_Position = matrixModelViewProjection * vec4(aPos, 1.0);\n\
+		uv = uvVertex;\n\
 	}";
 
 
@@ -55,9 +58,11 @@ uniform int thereisRGBA;\n\
 uniform float shininess;\n\
 // varyings\n\
 varying vec3 esVertex, esNormal;\n\
+varying vec2 uv;\n\
 varying vec4 color;\n\
 varying vec4 v_position;\n\
 // All components are in the range [0…1], including hue.\n\
+uniform sampler2D imgTexture;\n\
 vec3 hsv2rgb(vec3 c)\n\
 {\n\
 	vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);\n\
@@ -87,15 +92,12 @@ void main()\n\
 	float dotNH = max(dot(normal, halfv), 0.0);\n\
 	vec3 LightReflect = normalize(reflect(halfv, normal));\n\
 	float SpecularFactor = dot(vec3(0.0f, 0.0f, 1.0f), -LightReflect);\n\
-	//FragColor = vec4(SpecularFactor, 0, 0, 1.0);;\n\
-	//vec4 SpecularColor = vec4(1.0, 0, 0, 1.0);\n\
 	if (SpecularFactor > 0) {\n\
-		SpecularFactor = pow(SpecularFactor, 20.0f); \n\
+		SpecularFactor = pow(SpecularFactor, shininess); \n\
 		fragColor += lightSpecular * 1.0f * SpecularFactor; \n\
 	}\n\
-	FragColor = fragColor;\n\
-	//fragColor += (pow(dotNH, shininess) * lightSpecular) * color1;\n\
-	//FragColor = fragColor;\n\
+	//FragColor = vec4(uv, 0.0f, 1.0f);\n\
+	FragColor = texture(imgTexture, uv);\n\
 }";
 
 //顶点数组
@@ -113,11 +115,16 @@ std::vector<unsigned int> indices =
 	1, 2, 3
 };
 
+std::vector <float> uvData = {
+	0.0, 0.0
+};
+
 OpenglMathMode::OpenglMathMode(QWidget* parent)
 	: QGLWidget(parent)
 	, viewPortWidth(1600.0)
 	, viewPortHeight(1000.0)
 {
+	m_texture = nullptr;
 }
 
 OpenglMathMode::~OpenglMathMode()
@@ -136,6 +143,8 @@ void OpenglMathMode::initializeGL()
 	glViewport(0, 0, viewPortWidth, viewPortHeight);
 	//开启深度测试
 	glEnable(GL_DEPTH_TEST);
+	m_texture = new QOpenGLTexture(QImage("D:/4.jpg"));
+	int a = m_texture->width();
 
 	//计算投影矩阵
 	proj();
@@ -190,21 +199,27 @@ void OpenglMathMode::paintGL()
 	matrixNormalx.setColumn(3, QVector4D(0, 0, 0, 1));
 
 	indexBuffer->bind();
+	uvBuffer->bind();
+	m_texture->bind();
 	shader.bind();
 	glUniformMatrix4fv(uniformMatrixModelView, 1, false, matrixViewx.data());
 	glUniformMatrix4fv(uniformMatrixModelViewProjection, 1, false, matrixModelViewProjectionx.data());
 	glUniformMatrix4fv(uniformMatrixNormal, 1, false, matrixNormalx.data());
-	glEnableVertexAttribArray(attribVertexPosition);
+	//glEnableVertexAttribArray(attribVertexPosition);
 	//// set attrib arrays using glVertexAttribPointer()
-	glVertexAttribPointer(attribVertexPosition, 3, GL_FLOAT, false, 3 * sizeof(GL_FLOAT), (void*)0);
+	//glVertexAttribPointer(attribVertexPosition, 3, GL_FLOAT, false, 3 * sizeof(GL_FLOAT), (void*)0);
 
+	shader.enableAttributeArray("uvVertex");
 	shader.enableAttributeArray("vertexNormal");
 	shader.enableAttributeArray("aPos");
 	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 	shader.disableAttributeArray("aPos");
 	shader.disableAttributeArray("vertexNormal");
+	shader.disableAttributeArray("uvVertex");
 	shader.release();
 	indexBuffer->release();
+	uvBuffer->release();
+	m_texture->release();
 }
 
 void OpenglMathMode::InitShader()
@@ -224,6 +239,7 @@ void OpenglMathMode::InitBuffer()
 {
 	vertexBuffer = new QGLBuffer(QGLBuffer::VertexBuffer);
 	indexBuffer = new QGLBuffer(QGLBuffer::IndexBuffer);
+	uvBuffer = new QGLBuffer(QGLBuffer::VertexBuffer);
 
 	calculatXYZ();
 
@@ -232,6 +248,7 @@ void OpenglMathMode::InitBuffer()
 	vertexBuffer->bind();
 	vertexBuffer->allocate(&vertices[0], sizeof(GL_FLOAT) * vertices.size());
 	vertexBuffer->setUsagePattern(QGLBuffer::StaticDraw);
+
 	shader.setAttributeBuffer("aPos", GL_FLOAT, 0, 3, 6 * sizeof(GL_FLOAT));
 	shader.setAttributeBuffer("vertexNormal", GL_FLOAT, 3 * sizeof(GL_FLOAT), 3, 6 * sizeof(GL_FLOAT));
 	shader.setUniformValue("lightPosition", lightPosition);
@@ -244,6 +261,13 @@ void OpenglMathMode::InitBuffer()
 	shader.setUniformValue("thereisRGBA", 0);
 	vertexBuffer->release();
 	shader.release();
+
+	uvBuffer->create();
+	uvBuffer->bind();
+	uvBuffer->allocate(&uvData[0], sizeof(float) * uvData.size());
+	uvBuffer->setUsagePattern(QGLBuffer::StaticDraw);
+	shader.setAttributeBuffer("uvVertex", GL_FLOAT, 2 * sizeof(GL_FLOAT), 2, 2 * sizeof(GL_FLOAT));
+	uvBuffer->release();
 
 	indexBuffer->create();
 	indexBuffer->bind();
@@ -280,6 +304,7 @@ void OpenglMathMode::calculatXYZ()
 
 	vertices.resize(step * step * 6);
 	indices.resize(step * (step - 1) * 6);
+	uvData.resize(step * (step - 1) * 2);
 
 	for (int i = 0; i < step; i++) {
 		for (int j = 0; j < step; j++) {
@@ -296,15 +321,31 @@ void OpenglMathMode::calculatXYZ()
 
 			// 计算三角网格
 			if (i < step - 1) {
+				// D C
+				// A B 
 				// 三角形1
-				indices[step * 6 * i + j * 6] = j + step * i;
-				indices[step * 6 * i + j * 6 + 1] = j + 1 + step * i;
-				indices[step * 6 * i + j * 6 + 2] = j + 1 + step * i + step;
+				indices[step * 6 * i + j * 6] = j + step * i;        // A
+				indices[step * 6 * i + j * 6 + 1] = j + 1 + step * i; // B
+				indices[step * 6 * i + j * 6 + 2] = j + 1 + step * i + step; // C
 
 				// 三角形2
-				indices[step * 6 * i + j * 6 + 3] = j + step * i;
-				indices[step * 6 * i + j * 6 + 4] = j + step * i + step;
-				indices[step * 6 * i + j * 6 + 5] = j + 1 + step * i + step;
+				indices[step * 6 * i + j * 6 + 3] = j + step * i; // A
+				indices[step * 6 * i + j * 6 + 4] = j + step * i + step; // C
+				indices[step * 6 * i + j * 6 + 5] = j + 1 + step * i + step; // D
+
+				uvData[step * 2 * i + j * 2] = j * 1.0f / step;			//A.x
+				uvData[step * 2 * i + j * 2 + 1] = i * 1.0f / step;		//A.y
+				//uvData[step * 12 * i + j * 12 + 2] = (j + 1)* 1.0f / step;	//B.x
+				//uvData[step * 12 * i + j * 12 + 3] = i * 1.0f / step;		//B.y
+				//uvData[step * 12 * i + j * 12 + 4] = (j + 1) * 1.0f / step;//C.x
+				//uvData[step * 12 * i + j * 12 + 5] = (i + 1) * 1.0f / step; //C.y
+
+				//uvData[step * 12 * i + j * 12 + 6] = j * 1.0f / step;			//A.x
+				//uvData[step * 12 * i + j * 12 + 7] = i * 1.0f / step;		//A.y
+				//uvData[step * 12 * i + j * 12 + 8] = (j + 1) * 1.0f / step;//C.x
+				//uvData[step * 12 * i + j * 12 + 9] = (i + 1) * 1.0f / step; //C.y
+				//uvData[step * 12 * i + j * 12 + 10] = j * 1.0f / step;//D.x
+				//uvData[step * 12 * i + j * 12 + 11] = (i + 1) * 1.0f / step; //D.y
 			}
 		}
 	}
