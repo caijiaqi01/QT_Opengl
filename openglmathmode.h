@@ -8,6 +8,7 @@
 #include <QtOpenGL\QGLBuffer>
 #include <QtOpenGL\QGLShaderProgram>
 #include <QOpenGLTexture>
+#include <QKeyEvent>
 
 #define PI (double(314159265) / double(100000000))
 
@@ -27,6 +28,12 @@ protected:
 	void initializeGL();             //初始化OpenGL
 	void resizeGL(int w, int h);     //调整oeenGL的显示窗口
 	void paintGL();                  //绘制opengl图像
+	void keyPressEvent(QKeyEvent* keyEvent);
+
+public slots:
+	void mousePressEvent(QMouseEvent*)  override;
+	void mouseMoveEvent(QMouseEvent*)  override;
+	void mouseReleaseEvent(QMouseEvent*)  override;
 
 private:
 	void InitShader();
@@ -48,9 +55,15 @@ private:
 	QMatrix4x4 matrixModelViewProjectionx;
 	QMatrix4x4 matrixNormalx;
 	QMatrix4x4 matrixViewx;
+	int btgauche, btdroit, btmilieu, latence;
 
 	//相机位置
 	float cameraDistance = 11.4f;
+	bool mouseLeftDown = false;
+	bool mouseRightDown = false;
+	float mouseY = 0;
+	qreal acc;
+	QVector3D n;
 	QQuaternion rotation = QQuaternion::fromAxisAndAngle(QVector3D(1.0, 0.0, 0.0), 270) *
 		QQuaternion::fromAxisAndAngle(QVector3D(0.0, 0.0, 1.0), 225) *
 		QQuaternion::fromAxisAndAngle(QVector3D(1.0, -1.0, 0.0), -29);   //旋转矩阵
