@@ -427,6 +427,93 @@ void OpenglMathMode::proj()
 	matrixProjectionx.perspective(fov, aspect, zNear, zFar);
 }
 
+
+void OpenglMathMode::keyPressEvent(QKeyEvent* keyEvent) {
+	/*
+	switch (keyEvent->key()) {
+	case Qt::Key_Right:
+		camera_pos.setZ(camera_pos.z() + 0.1f);
+		break;
+	case Qt::Key_Left:
+		camera_pos.setZ(camera_pos.z() - 0.1f);
+		break;
+	case Qt::Key_Up:
+		camera_pos.setX(camera_pos.x() + 0.1f);
+		break;
+	case Qt::Key_Down:
+		camera_pos.setX(camera_pos.x() - 0.1f);
+		break;
+	case Qt::Key_Plus:
+		camera_pos.setY(camera_pos.y() + 0.1f);
+		break;
+	case Qt::Key_Minus:
+		camera_pos.setY(camera_pos.y() - 0.1f);
+		break;
+	}
+	update();*/
+}
+
+void OpenglMathMode::mouseMoveEvent(QMouseEvent* e)
+{
+	static int oldx = 0, oldy = 0;
+	static QVector3D oldn = QVector3D(0, 0, 1);
+	if (mouseLeftDown)
+	{
+		QVector2D diff = QVector2D(e->pos()) - mousePressPosition;
+		// Rotation axis is perpendicular to the mouse position difference
+		n = QVector3D(diff.y(), diff.x(), 0.0).normalized();
+		// Accelerate angular speed relative to the length of the mouse sweep
+		acc = std::sqrt((diff.y() - oldy) * (diff.y() - oldy) + float(diff.x() - oldx) * (diff.x() - oldx)) / 3.0;
+		// Calculate new rotation axis
+		rotation = QQuaternion::fromAxisAndAngle(n, acc) * oldRotation;
+		oldn = n;
+	}
+	if (mouseRightDown)
+	{
+		cameraDistance -= (e->pos().y() / 2 - mouseY) * 0.02f;
+		mouseY = e->pos().y() / 2;
+	}
+	update();
+}
+
+void OpenglMathMode::mouseReleaseEvent(QMouseEvent*)
+{
+	oldRotation = rotation;
+}
+
+void OpenglMathMode::mousePressEvent(QMouseEvent* e)
+{
+	// Save mouse press position
+	mousePressPosition = QVector2D(e->pos());
+	rotation = oldRotation;
+	if (e->button() == Qt::LeftButton)
+	{
+		btgauche = 1;
+		mouseLeftDown = true;
+	}
+	else
+	{
+		btgauche = 0;
+		mouseLeftDown = false;
+	}
+	if (e->button() == Qt::RightButton)
+	{
+		btdroit = 1;
+		mouseRightDown = true;
+	}
+	else
+	{
+		btdroit = 0;
+		mouseRightDown = false;
+	}
+	if (e->button() == Qt::MiddleButton)
+		btmilieu = 1;
+	else
+		btmilieu = 0;
+
+	mouseY = e->pos().y() / 2;
+}
+
 /*
 gl_Position 它并没有类型in、out或是uniform的声明，而是直接使用，且在后面的程序中也未被引用。原来它是默认是归一化的裁剪空间坐标，xyz各个维度的范围为 - 1到1，仅能在顶点着色器中使用，既是输入也是输出。gl_Position赋值范围就是float的取值范围(32位)，只不过只有[-1, 1]区间的片元被绘制。它是vec4类型的，不能重声明为dvec4等类型。
 gl_Position可以通过视角划分转换为标准化设备空间中的笛卡尔坐标：
