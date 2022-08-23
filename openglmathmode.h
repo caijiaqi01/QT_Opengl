@@ -25,9 +25,9 @@ public:
     ~OpenglMathMode();
 
 protected:
-	void initializeGL();             //åˆå§‹åŒ–OpenGL
-	void resizeGL(int w, int h);     //è°ƒæ•´oeenGLçš„æ˜¾ç¤ºçª—å£
-	void paintGL();                  //ç»˜åˆ¶openglå›¾åƒ
+	void initializeGL();             //³õÊ¼»¯OpenGL
+	void resizeGL(int w, int h);     //µ÷ÕûoeenGLµÄÏÔÊ¾´°¿Ú
+	void paintGL();                  //»æÖÆopenglÍ¼Ïñ
 	void keyPressEvent(QKeyEvent* keyEvent);
 
 public slots:
@@ -42,23 +42,24 @@ private:
 public:
 	void calculatXYZ();
 	void proj();
+	void setWorldGrid();
 
 private:
 	Ui::OpenglMathMode* ui;
 
 	QGLShaderProgram shader;
-	QGLBuffer* vertexBuffer; //é¡¶ç‚¹åæ ‡
-	QGLBuffer* indexBuffer; //é¡¶ç‚¹ç´¢å¼•
-	QGLBuffer* uvBuffer;   //çº¹ç†è´´å›¾ç¼“å†²åŒº
-	QOpenGLTexture* m_texture;  //çº¹ç†å›¾ç‰‡
+	QGLBuffer* vertexBuffer; //¶¥µã×ø±ê
+	QGLBuffer* indexBuffer; //¶¥µãË÷Òı
+	QGLBuffer* uvBuffer;   //ÎÆÀíÌùÍ¼»º³åÇø
+	QOpenGLTexture* m_texture;  //ÎÆÀíÍ¼Æ¬
 	QMatrix4x4 matrixProjectionx;
 	QMatrix4x4 matrixModelViewProjectionx;
 	QMatrix4x4 matrixNormalx;
 	QMatrix4x4 matrixViewx;
 	int btgauche, btdroit, btmilieu, latence;
 
-	//ç›¸æœºä½ç½®
-	float cameraDistance = 11.4f;
+	//Ïà»úÎ»ÖÃ
+	float cameraDistance = 15.4f;
 	bool mouseLeftDown = false;
 	bool mouseRightDown = false;
 	float mouseY = 0;
@@ -66,20 +67,45 @@ private:
 	QVector3D n;
 	QQuaternion rotation = QQuaternion::fromAxisAndAngle(QVector3D(1.0, 0.0, 0.0), 270) *
 		QQuaternion::fromAxisAndAngle(QVector3D(0.0, 0.0, 1.0), 225) *
-		QQuaternion::fromAxisAndAngle(QVector3D(1.0, -1.0, 0.0), -29);   //æ—‹è½¬çŸ©é˜µ
+		QQuaternion::fromAxisAndAngle(QVector3D(1.0, -1.0, 0.0), -29);   //Ğı×ª¾ØÕó
 	QQuaternion rotationx;
 	QQuaternion rotationy;
 	QQuaternion rotationz;
+	float translatex = 0.0f;
+	float translatey = 0.0f;
+	float translatez = 0.0f;
 	QQuaternion oldRotation = rotation;
 
-	//ç¯å…‰
-	QVector4D lightPosition = { 2.0f, 0.0f, 0.0f, 1.0f };  //å…‰ç…§çš„æ–¹å‘
+	//µÆ¹â
+	QVector4D lightPosition = { 2.0f, 0.0f, 0.0f, 1.0f };  //¹âÕÕµÄ·½Ïò
 	QVector4D lightAmbient = { 0.5f, 0.5f, 0.5f, 0.1f };//{0.4f, 0.4f, 0.4f, 0.1};
 	QVector4D lightDiffuse = { 0.8f, 0.8f, 0.8f, 1.0f };
 	QVector4D lightSpecular = { 0.5f, 0.5f, 0.5f, 0.1f };//{0.4f, 0.4f, 0.4f, 0.1};
 	QVector4D frontColor = { 0.72f, 0.5f, 0.1f, 1.0f };
 	QVector4D backColor = { 0.1f, 0.7f, 0.2f, 1.0f };
-	float shininessVal = 20.0f;   //é«˜å…‰å°–é”ç¨‹åº¦çš„æŒ‡æ•°å€¼
+	float shininessVal = 20.0f;   //¸ß¹â¼âÈñ³Ì¶ÈµÄÖ¸ÊıÖµ
+
+	std::vector<float> worldGrid;    // ÊÀ½ç±³¾°Íø¸ñ
+	int PlanStartIndex = 0;      // ÊÀ½çÍø¸ñÆğÊ¼µã
+
+//¶¥µãÊı×é
+	std::vector<float> vertices = {
+		0.5f, 0.5f, 0.0f,
+		0.5f, -0.5f, 0.0f,
+	   -0.5f, -0.5f, 0.0f,
+	   -0.5f,  0.5f, 0.0f
+	};
+
+	//¶¥µãË÷Òı
+	std::vector<unsigned int> indices =
+	{
+		0, 1, 3,
+		1, 2, 3
+	};
+
+	std::vector <float> uvData = {
+		0.0, 0.0
+	};
 
 	GLint uniformFrontColor;
 	GLint uniformBackColor;

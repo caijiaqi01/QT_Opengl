@@ -6,11 +6,11 @@
 //gl_Position = matrixModelViewProjection * vec4(vertexPosition, 1.0);\n\
 // gl_Position = vec4(aPos, 1.0);\n\
 // 	
-//é¡¶ç‚¹ç€è‰²å™¨
+//¶¥µã×ÅÉ«Æ÷
 QString vertexShaderSource =
 "#version 330 core\n\
 	layout (location = 0) in vec3 aPos;\n\
-    // varyings (output) è¾“å‡ºç»™ç‰‡æ®µç€è‰²å™¨\n\
+    // varyings (output) Êä³ö¸øÆ¬¶Î×ÅÉ«Æ÷\n\
 	varying vec3 esVertex, esNormal;\n\
 	varying vec2 uv; \n\
 	varying vec4 color;\n\
@@ -34,12 +34,12 @@ QString vertexShaderSource =
 	}";
 
 
-//vec4(r, g, b, a), å‰ä¸‰ä¸ªå‚æ•°è¡¨ç¤ºç‰‡å…ƒåƒç´ é¢œè‰²å€¼RGBï¼Œç¬¬å››ä¸ªå‚æ•°æ˜¯ç‰‡å…ƒåƒç´ é€æ˜åº¦Aï¼Œ1.0è¡¨ç¤ºä¸é€æ˜, 0.0è¡¨ç¤ºå®Œå…¨é€æ˜ã€‚
-//ç‰‡æ®µç€è‰²å™¨åªéœ€è¦ä¸€ä¸ªè¾“å‡ºå˜é‡ï¼Œè¿™ä¸ªå˜é‡æ˜¯ä¸€ä¸ª4åˆ†é‡å‘é‡ï¼Œå®ƒè¡¨ç¤ºçš„æ˜¯æœ€ç»ˆçš„è¾“å‡ºé¢œè‰²ï¼Œ
-// æˆ‘ä»¬åº”è¯¥è‡ªå·±å°†å…¶è®¡ç®—å‡ºæ¥ã€‚æˆ‘ä»¬å¯ä»¥ç”¨outå…³é”®å­—å£°æ˜è¾“å‡ºå˜é‡ï¼Œè¿™é‡Œæˆ‘ä»¬å‘½åä¸ºFragColorã€‚
-// ä¸‹é¢ï¼Œæˆ‘ä»¬å°†ä¸€ä¸ªalphaå€¼ä¸º1.0(1.0ä»£è¡¨å®Œå…¨ä¸é€æ˜)çš„æ©˜é»„è‰²çš„vec4èµ‹å€¼ç»™é¢œè‰²è¾“å‡ºã€‚
-// gl_FragColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);\n\ (ä¹Ÿå¯ä½¿ç”¨å†…ç½®å˜é‡ä¿®æ”¹é¢œè‰²)
-//ç‰‡æ®µç€è‰²å™¨
+//vec4(r, g, b, a), Ç°Èı¸ö²ÎÊı±íÊ¾Æ¬ÔªÏñËØÑÕÉ«ÖµRGB£¬µÚËÄ¸ö²ÎÊıÊÇÆ¬ÔªÏñËØÍ¸Ã÷¶ÈA£¬1.0±íÊ¾²»Í¸Ã÷, 0.0±íÊ¾ÍêÈ«Í¸Ã÷¡£
+//Æ¬¶Î×ÅÉ«Æ÷Ö»ĞèÒªÒ»¸öÊä³ö±äÁ¿£¬Õâ¸ö±äÁ¿ÊÇÒ»¸ö4·ÖÁ¿ÏòÁ¿£¬Ëü±íÊ¾µÄÊÇ×îÖÕµÄÊä³öÑÕÉ«£¬
+// ÎÒÃÇÓ¦¸Ã×Ô¼º½«Æä¼ÆËã³öÀ´¡£ÎÒÃÇ¿ÉÒÔÓÃout¹Ø¼ü×ÖÉùÃ÷Êä³ö±äÁ¿£¬ÕâÀïÎÒÃÇÃüÃûÎªFragColor¡£
+// ÏÂÃæ£¬ÎÒÃÇ½«Ò»¸öalphaÖµÎª1.0(1.0´ú±íÍêÈ«²»Í¸Ã÷)µÄéÙ»ÆÉ«µÄvec4¸³Öµ¸øÑÕÉ«Êä³ö¡£
+// gl_FragColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);\n\ (Ò²¿ÉÊ¹ÓÃÄÚÖÃ±äÁ¿ĞŞ¸ÄÑÕÉ«)
+//Æ¬¶Î×ÅÉ«Æ÷
 QString fragmentShaderSource =
 "#version 330 core\n\
 out vec4 FragColor;\n\
@@ -56,12 +56,13 @@ uniform vec4 lightSpecular;\n\
 uniform int hsvactive;\n\
 uniform int thereisRGBA;\n\
 uniform float shininess;\n\
+uniform int glFrontFacing_1;\n\
 // varyings\n\
 varying vec3 esVertex, esNormal;\n\
 varying vec2 uv;\n\
 varying vec4 color;\n\
 varying vec4 v_position;\n\
-// All components are in the range [0â€¦1], including hue.\n\
+// All components are in the range [0¡­1], including hue.\n\
 uniform sampler2D imgTexture;\n\
 vec3 hsv2rgb(vec3 c)\n\
 {\n\
@@ -96,28 +97,31 @@ void main()\n\
 		SpecularFactor = pow(SpecularFactor, shininess); \n\
 		fragColor += lightSpecular * 1.0f * SpecularFactor; \n\
 	}\n\
-	//FragColor = vec4(uv, 0.0f, 1.0f);\n\
-	FragColor = texture(imgTexture, uv);\n\
+	if (glFrontFacing_1 == 1){ \n\
+		FragColor = vec4(1.0, 0.0f, 0.0f, 1.0f); \n\
+	} \n\
+	else if (glFrontFacing_1 == 2) {\n\
+		FragColor = vec4(0.6f, 0.6f, 0.6f, 1.0f); \n\
+	}\n\
+	else if (glFrontFacing_1 == 3) {\n\
+		FragColor = vec4(1.0f, 0.0f, 0.0f, 1.0f); \n\
+	}\n\
+	else if (glFrontFacing_1 == 4) {\n\
+		FragColor = vec4(0.0f, 1.0f, 0.0f, 1.0f); \n\
+	}\n\
+	else if (glFrontFacing_1 == 5) {\n\
+		FragColor = vec4(0.0f, 0.0f, 1.0f, 1.0f); \n\
+	}\n\
+	else { \n\
+		float back = dot(vec3(0.0f, 0.0f, 1.0f), normal);\n\
+		if (back < 0.0f) {\n\
+			FragColor = vec4(0.0f, 0.6f, 0.0f, 1.0f); \n\
+		}\n\
+		else {\n\
+			FragColor = texture(imgTexture, uv); \n\
+		}\n\
+	} \n\
 }";
-
-//é¡¶ç‚¹æ•°ç»„
-std::vector<float> vertices = {
-	0.5f, 0.5f, 0.0f,
-	0.5f, -0.5f, 0.0f,
-   -0.5f, -0.5f, 0.0f,
-   -0.5f,  0.5f, 0.0f
-};
-
-//é¡¶ç‚¹ç´¢å¼•
-std::vector<unsigned int> indices =
-{
-	0, 1, 3,
-	1, 2, 3
-};
-
-std::vector <float> uvData = {
-	0.0, 0.0
-};
 
 OpenglMathMode::OpenglMathMode(QWidget* parent)
 	: QGLWidget(parent)
@@ -132,30 +136,29 @@ OpenglMathMode::~OpenglMathMode()
 }
 
 /*
-QOpenGLFunctions::initializeOpenGLFunctions()ï¼š ä¸ºå½“å‰ä¸Šä¸‹æ–‡åˆå§‹åŒ–OpenGLå‡½æ•°è§£æã€‚è°ƒç”¨æ­¤å‡½æ•°åï¼ŒQOpenGLFunctionså¯¹è±¡åªèƒ½ä¸å½“å‰ä¸Šä¸‹æ–‡ä»¥åŠä¸å…¶å…±äº«çš„å…¶ä»–ä¸Šä¸‹æ–‡ä¸€èµ·ä½¿ç”¨ã€‚å†æ¬¡è°ƒç”¨initializeOpenGLFunctions()ä»¥æ›´æ”¹å¯¹è±¡çš„ä¸Šä¸‹æ–‡å…³è”ã€‚
-QOpenGLContext::makeCurrent()ï¼š åœ¨ç»™å®šçš„surfaceä¸Šä½¿å½“å‰çº¿ç¨‹ä¸­çš„ä¸Šä¸‹æ–‡æˆä¸ºå½“å‰ä¸Šä¸‹æ–‡ã€‚æˆåŠŸè¿”å›true, å¦åˆ™è¿”å›falseã€‚å¦‚æœè¡¨é¢æœªæš´éœ²ï¼Œæˆ–è€…ç”±äºä¾‹å¦‚åº”ç”¨ç¨‹åºè¢«æŒ‚èµ·è€Œå¯¼è‡´å›¾å½¢ç¡¬ä»¶ä¸å¯ç”¨ï¼Œåˆ™åè€…å¯èƒ½å‘ç”Ÿã€‚
-QOpenGLContext::swapBuffers()ï¼š äº¤æ¢æ¸²æŸ“è¡¨é¢çš„å‰åç¼“å†²åŒºã€‚è°ƒç”¨æ­¤å‘½ä»¤ä»¥å®ŒæˆOpenGLæ¸²æŸ“çš„æ¡†æ¶ï¼Œå¹¶ç¡®ä¿åœ¨å‘å‡ºä»»ä½•å…¶ä»–OpenGLå‘½ä»¤ï¼ˆä¾‹å¦‚ï¼Œä½œä¸ºæ–°æ¡†æ¶çš„ä¸€éƒ¨åˆ†ï¼‰ä¹‹å‰å†æ¬¡è°ƒç”¨makeCurrent()ã€‚
+QOpenGLFunctions::initializeOpenGLFunctions()£º Îªµ±Ç°ÉÏÏÂÎÄ³õÊ¼»¯OpenGLº¯Êı½âÎö¡£µ÷ÓÃ´Ëº¯Êıºó£¬QOpenGLFunctions¶ÔÏóÖ»ÄÜÓëµ±Ç°ÉÏÏÂÎÄÒÔ¼°ÓëÆä¹²ÏíµÄÆäËûÉÏÏÂÎÄÒ»ÆğÊ¹ÓÃ¡£ÔÙ´Îµ÷ÓÃinitializeOpenGLFunctions()ÒÔ¸ü¸Ä¶ÔÏóµÄÉÏÏÂÎÄ¹ØÁª¡£
+QOpenGLContext::makeCurrent()£º ÔÚ¸ø¶¨µÄsurfaceÉÏÊ¹µ±Ç°Ïß³ÌÖĞµÄÉÏÏÂÎÄ³ÉÎªµ±Ç°ÉÏÏÂÎÄ¡£³É¹¦·µ»Øtrue, ·ñÔò·µ»Øfalse¡£Èç¹û±íÃæÎ´±©Â¶£¬»òÕßÓÉÓÚÀıÈçÓ¦ÓÃ³ÌĞò±»¹ÒÆğ¶øµ¼ÖÂÍ¼ĞÎÓ²¼ş²»¿ÉÓÃ£¬ÔòºóÕß¿ÉÄÜ·¢Éú¡£
+QOpenGLContext::swapBuffers()£º ½»»»äÖÈ¾±íÃæµÄÇ°ºó»º³åÇø¡£µ÷ÓÃ´ËÃüÁîÒÔÍê³ÉOpenGLäÖÈ¾µÄ¿ò¼Ü£¬²¢È·±£ÔÚ·¢³öÈÎºÎÆäËûOpenGLÃüÁî£¨ÀıÈç£¬×÷ÎªĞÂ¿ò¼ÜµÄÒ»²¿·Ö£©Ö®Ç°ÔÙ´Îµ÷ÓÃmakeCurrent()¡£
 */
 
 void OpenglMathMode::initializeGL()
 {
-	//è®¾ç½®è£å‰ªé¢
+	//ÉèÖÃ²Ã¼ôÃæ
 	glViewport(0, 0, viewPortWidth, viewPortHeight);
-	//å¼€å¯æ·±åº¦æµ‹è¯•
+	//¿ªÆôÉî¶È²âÊÔ
 	glEnable(GL_DEPTH_TEST);
-	m_texture = new QOpenGLTexture(QImage("D:/4.jpg"));
-	int a = m_texture->width();
+	m_texture = new QOpenGLTexture(QImage("D:/5.png")); //5.jpg
 
-	//è®¡ç®—æŠ•å½±çŸ©é˜µ
+	//¼ÆËãÍ¶Ó°¾ØÕó
 	proj();
 
-	//ä¸ºå½“å‰ä¸Šä¸‹æ–‡åˆå§‹åŒ–OpenGLå‡½æ•°è§£æ
+	//Îªµ±Ç°ÉÏÏÂÎÄ³õÊ¼»¯OpenGLº¯Êı½âÎö
 	initializeGLFunctions();
 
-	//åˆå§‹åŒ–ç€è‰²å™¨
+	//³õÊ¼»¯×ÅÉ«Æ÷
 	InitShader();
 
-	//åˆå§‹åŒ–ç¼“å†²åŒº
+	//³õÊ¼»¯»º³åÇø
 	InitBuffer();
 }
 
@@ -166,22 +169,22 @@ void OpenglMathMode::resizeGL(int w, int h)
 		viewPortHeight = h;
 	}
 
-	//è®¡ç®—æŠ•å½±çŸ©é˜µ
+	//¼ÆËãÍ¶Ó°¾ØÕó
 	proj();
 }
 
 /*
-	//è§†å›¾çŸ©é˜µ
+	//ÊÓÍ¼¾ØÕó
 	QMatrix4x4 view;
-	view.setToIdentity();//å¯¹çŸ©é˜µè¿›è¡Œå•ä½åŒ–ï¼Œä¿è¯æ‰€æœ‰çŸ©é˜µè¿ç®—éƒ½ä¼šåœ¨ä¸€ä¸ªå•ä½çŸ©é˜µä¸Šè¿›è¡Œ
-	view.lookAt(QVector3D(2, 2, 2),     //çœ¼ç›çš„ä½ç½®
-				QVector3D(0, 0, 0),     //çœ¼ç›çœ‹çš„ä½ç½®
-				QVector3D(0, 1, 0));    //æ­¤å‚æ•°è¡¨ç¤ºæ–¹å‘ï¼Œç›¸å¯¹äºçœ¼ç›å‘ä¸Šçš„æ–¹å‘ã€‚
-	//æ¨¡å‹çŸ©é˜µ
+	view.setToIdentity();//¶Ô¾ØÕó½øĞĞµ¥Î»»¯£¬±£Ö¤ËùÓĞ¾ØÕóÔËËã¶¼»áÔÚÒ»¸öµ¥Î»¾ØÕóÉÏ½øĞĞ
+	view.lookAt(QVector3D(2, 2, 2),     //ÑÛ¾¦µÄÎ»ÖÃ
+				QVector3D(0, 0, 0),     //ÑÛ¾¦¿´µÄÎ»ÖÃ
+				QVector3D(0, 1, 0));    //´Ë²ÎÊı±íÊ¾·½Ïò£¬Ïà¶ÔÓÚÑÛ¾¦ÏòÉÏµÄ·½Ïò¡£
+	//Ä£ĞÍ¾ØÕó
 	QMatrix4x4 model;
 	model.setToIdentity();
-	model.rotate(QTime::currentTime().msec(), 1.0f, 5.0f, 0.5f);//æ—‹è½¬ è¯¥çŸ©é˜µå°†åæ ‡ç»•çŸ¢é‡ (x, y, z) æ—‹è½¬angleåº¦
-	model.scale(0.6f);//ç¼©æ”¾
+	model.rotate(QTime::currentTime().msec(), 1.0f, 5.0f, 0.5f);//Ğı×ª ¸Ã¾ØÕó½«×ø±êÈÆÊ¸Á¿ (x, y, z) Ğı×ªangle¶È
+	model.scale(0.6f);//Ëõ·Å
 */
 
 void OpenglMathMode::paintGL()
@@ -194,6 +197,7 @@ void OpenglMathMode::paintGL()
 	matrixViewx.setToIdentity();
 	matrixViewx.translate(0.0, 0.0, -cameraDistance);
 	matrixViewx.rotate(rotation);
+	matrixViewx.translate(translatex, translatey, translatez);
 	matrixModelViewProjectionx = matrixProjectionx * matrixViewx;
 	matrixNormalx = matrixViewx;
 	matrixNormalx.setColumn(3, QVector4D(0, 0, 0, 1));
@@ -212,7 +216,43 @@ void OpenglMathMode::paintGL()
 	shader.enableAttributeArray("uvVertex");
 	shader.enableAttributeArray("vertexNormal");
 	shader.enableAttributeArray("aPos");
+	shader.setUniformValue("glFrontFacing_1", 0);
+
+	// ¿¹¾â³İ
+	//glEnable(GL_LINE_SMOOTH);
+	//glHint(GL_LINE_SMOOTH, GL_NICEST);
+
+	// ¶à±ßĞÎÆ«ÒÆ
+	glEnable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(1.0f, 1.0f);
+	// Ä£ĞÍÖ÷Ìå»æÖÆ
 	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+	glDisable(GL_POLYGON_OFFSET_FILL);
+
+	shader.setUniformValue("glFrontFacing_1", 1);
+	// ÉèÖÃÍø¸ñÏßµÄ¿í¶È 
+	glLineWidth(0.4f);
+	// Ä£ĞÍÍø¸ñ»æÖÆ
+	glDrawElements(GL_LINE_LOOP, indices.size(), GL_UNSIGNED_INT, 0);
+
+	//ÊÀ½çÍø¸ñ»æÖÆ
+	shader.setUniformValue("glFrontFacing_1", 2);
+	glLineWidth(0.3);
+	glDrawArrays(GL_LINES, PlanStartIndex, 80);
+
+	//XÖá»æÖÆ
+	shader.setUniformValue("glFrontFacing_1", 3);
+	glLineWidth(3.0);
+	glDrawArrays(GL_LINES, PlanStartIndex + 80, 2);
+
+	//YÖá»æÖÆ
+	shader.setUniformValue("glFrontFacing_1", 4);
+	glDrawArrays(GL_LINES, PlanStartIndex + 82, 2);
+
+	//ZÖá»æÖÆ
+	shader.setUniformValue("glFrontFacing_1", 5);
+	glDrawArrays(GL_LINES, PlanStartIndex + 84, 2);
+
 	shader.disableAttributeArray("aPos");
 	shader.disableAttributeArray("vertexNormal");
 	shader.disableAttributeArray("uvVertex");
@@ -243,6 +283,10 @@ void OpenglMathMode::InitBuffer()
 
 	calculatXYZ();
 
+	//¼ÆËãÊÀ½çÍø¸ñ×ø±ê
+	setWorldGrid();
+
+	// ¶¥µãÊı×é»º³åÇø°ó¶¨
 	shader.bind();
 	vertexBuffer->create();
 	vertexBuffer->bind();
@@ -262,6 +306,7 @@ void OpenglMathMode::InitBuffer()
 	vertexBuffer->release();
 	shader.release();
 
+	// ÎÆÀí»º³åÇø°ó¶¨
 	uvBuffer->create();
 	uvBuffer->bind();
 	uvBuffer->allocate(&uvData[0], sizeof(float) * uvData.size());
@@ -269,6 +314,7 @@ void OpenglMathMode::InitBuffer()
 	shader.setAttributeBuffer("uvVertex", GL_FLOAT, 2 * sizeof(GL_FLOAT), 2, 2 * sizeof(GL_FLOAT));
 	uvBuffer->release();
 
+	// ¶¥µãË÷Òı»º³åÇø°ó¶¨
 	indexBuffer->create();
 	indexBuffer->bind();
 	indexBuffer->allocate(&indices[0], sizeof(int) * indices.size());
@@ -280,29 +326,32 @@ void OpenglMathMode::InitBuffer()
 void OpenglMathMode::calculatXYZ()
 {
 	float Umin = 0.0f;
-	float Umax = 2 * PI; // x,y åæ ‡å‚æ•°
+	float Umax = 2 * PI; // x,y ×ø±ê²ÎÊı
 	float Vmin = -PI;
-	float Vmax = PI;     // z åæ ‡å‚æ•°
+	float Vmax = PI;     // z ×ø±ê²ÎÊı
 
 	std::vector<float> valU;
 	std::vector<float> valV;
-	// ç½‘æ ¼å¯†åº¦
+	// Íø¸ñÃÜ¶È
 	int step = 64;
 
-	// xyzåæ ‡ æœ€å¤§å€¼å’Œæœ€å°å€¼å·®
+	// xyz×ø±ê ×î´óÖµºÍ×îĞ¡Öµ²î
 	float u_l = Umax - Umin;
 	float v_l = Vmax - Vmin;
 
-	// å°†åæ ‡åˆ†æˆè‹¥å¹²æ®µè¿›è¡Œè®¡ç®—
+	// ½«×ø±ê·Ö³ÉÈô¸É¶Î½øĞĞ¼ÆËã
+	float one_u = u_l / (step - 1);
+	float one_v = v_l / (step - 1);
 	for (unsigned int i = 0; i < step; i++) {
-		float u = (i * u_l) / (step - 1) + Umin;
+		float u = Umax - i * one_u;
 		valU.push_back(u);
 
-		float v = (i * v_l) / (step - 1) + Vmin;
+		float v = Vmax - i * one_v;
 		valV.push_back(v);
 	}
 
 	vertices.resize(step * step * 6);
+	PlanStartIndex = vertices.size() / 6;
 	indices.resize(step * (step - 1) * 6);
 	uvData.resize(step * (step - 1) * 2);
 
@@ -311,7 +360,7 @@ void OpenglMathMode::calculatXYZ()
 			float Fx = cos(valU[j]) * (4 + (19 / 5) * cos(valV[i]));
 			float Fy = sin(valU[j]) * (4 + (19 / 5) * cos(valV[i]));
 			float Fz = (cos(valV[i]) + sin(valV[i]) - 1) * (1 + sin(valV[i])) * log(1 - PI * valV[i] / 10) + (15 / 2) * sin(valV[i]);
-			// è®¡ç®—é¡¶ç‚¹åæ ‡
+			// ¼ÆËã¶¥µã×ø±ê
 			vertices[step * 6 * i + j * 6] = Fx;
 			vertices[step * 6 * i + j * 6 + 1] = Fy;
 			vertices[step * 6 * i + j * 6 + 2] = Fz;
@@ -319,33 +368,23 @@ void OpenglMathMode::calculatXYZ()
 			vertices[step * 6 * i + j * 6 + 4] = 0.0f;
 			vertices[step * 6 * i + j * 6 + 5] = 0.0f;
 
-			// è®¡ç®—ä¸‰è§’ç½‘æ ¼
+			// ¼ÆËãÈı½ÇÍø¸ñ
 			if (i < step - 1) {
 				// D C
 				// A B 
-				// ä¸‰è§’å½¢1
+				// Èı½ÇĞÎ1
 				indices[step * 6 * i + j * 6] = j + step * i;        // A
-				indices[step * 6 * i + j * 6 + 1] = j + 1 + step * i; // B
-				indices[step * 6 * i + j * 6 + 2] = j + 1 + step * i + step; // C
+				indices[step * 6 * i + j * 6 + 1] = (j + 1) % step + step * i; // B
+				indices[step * 6 * i + j * 6 + 2] = (j + 1) % step + step * i + step; // C
 
-				// ä¸‰è§’å½¢2
+				// Èı½ÇĞÎ2
 				indices[step * 6 * i + j * 6 + 3] = j + step * i; // A
-				indices[step * 6 * i + j * 6 + 4] = j + step * i + step; // C
-				indices[step * 6 * i + j * 6 + 5] = j + 1 + step * i + step; // D
+				indices[step * 6 * i + j * 6 + 4] = j + step * i + step; // D
+				indices[step * 6 * i + j * 6 + 5] = (j + 1) % step + step * i + step; // C
 
+				// ÎÆÀí×ø±ê
 				uvData[step * 2 * i + j * 2] = j * 1.0f / step;			//A.x
 				uvData[step * 2 * i + j * 2 + 1] = i * 1.0f / step;		//A.y
-				//uvData[step * 12 * i + j * 12 + 2] = (j + 1)* 1.0f / step;	//B.x
-				//uvData[step * 12 * i + j * 12 + 3] = i * 1.0f / step;		//B.y
-				//uvData[step * 12 * i + j * 12 + 4] = (j + 1) * 1.0f / step;//C.x
-				//uvData[step * 12 * i + j * 12 + 5] = (i + 1) * 1.0f / step; //C.y
-
-				//uvData[step * 12 * i + j * 12 + 6] = j * 1.0f / step;			//A.x
-				//uvData[step * 12 * i + j * 12 + 7] = i * 1.0f / step;		//A.y
-				//uvData[step * 12 * i + j * 12 + 8] = (j + 1) * 1.0f / step;//C.x
-				//uvData[step * 12 * i + j * 12 + 9] = (i + 1) * 1.0f / step; //C.y
-				//uvData[step * 12 * i + j * 12 + 10] = j * 1.0f / step;//D.x
-				//uvData[step * 12 * i + j * 12 + 11] = (i + 1) * 1.0f / step; //D.y
 			}
 		}
 	}
@@ -358,7 +397,7 @@ void OpenglMathMode::calculatXYZ()
 				A
 
 				B    C
-				å³æ‰‹å®šåˆ™å¾—å‡ºæ³•å‘é‡
+				ÓÒÊÖ¶¨ÔòµÃ³ö·¨ÏòÁ¿
 			    AB = A - B
 				BC = B - C	
 			*/
@@ -373,7 +412,7 @@ void OpenglMathMode::calculatXYZ()
 			vertices[i * deplacement + j * 6 + 4] = cab * ba - ca * bab;
 			vertices[i * deplacement + j * 6 + 5] = ca * baa - caa * ba;
 
-			//ä¿è¯æ·±åº¦æ–¹å‘å‘å¤–    æ³•çº¿è®¡ç®—æœ‰é”™è¯¯ï¼Œæ–¹å‘åäº†
+			//±£Ö¤Éî¶È·½ÏòÏòÍâ    ·¨Ïß¼ÆËãÓĞ´íÎó£¬·½Ïò·´ÁË
 			if (vertices[i * deplacement + j * 6 + 5] < 0)
 			{
 				//vertices[i * deplacement + j * 6 + 3] = -vertices[i * deplacement + j * 6 + 3];
@@ -411,46 +450,144 @@ void OpenglMathMode::calculatXYZ()
 	int a = 0;
 }
 
+void OpenglMathMode::setWorldGrid() 
+{
+	float step = 1.0f;
+	float z = -2.5 * PI;
+	for (int i = 0; i < 20; i++) {
+		vertices.push_back(i * step - 10 * step); // x
+		vertices.push_back(-11 * step ); // y
+		vertices.push_back(z); // z
+
+		vertices.push_back(i * step - 10 * step); // x
+		vertices.push_back(-11 * step - step); // y
+		vertices.push_back(z + 1.0f); // z
+
+		vertices.push_back(i * step - 10 * step); // x
+		vertices.push_back(10 * step); // y
+		vertices.push_back(z); // z
+
+		vertices.push_back(i * step - 10 * step); // x
+		vertices.push_back(10 * step); // y
+		vertices.push_back(z + 1.0f); // z
+
+
+		vertices.push_back(-11 * step); // x
+		vertices.push_back(i * step - 10 * step); // y
+		vertices.push_back(z); // z
+
+		vertices.push_back(-11 * step); // x
+		vertices.push_back(i * step - 10 * step); // y
+		vertices.push_back(z + 1.0f); // z
+
+		vertices.push_back(10 * step); // x
+		vertices.push_back(i * step - 10 * step); // y
+		vertices.push_back(z); // z
+
+		vertices.push_back(10 * step); // x
+		vertices.push_back(i * step - 10 * step); // y
+		vertices.push_back(z + 1.0f); // z
+	}
+
+	// XÖáÆğµã
+	vertices.push_back(0.0f);
+	vertices.push_back(0.0f);
+	vertices.push_back(0.0f);
+
+	// XÖáÆğµã ·¨ÏòÁ¿
+	vertices.push_back(0.0f);
+	vertices.push_back(0.0f);
+	vertices.push_back(1.0f);
+
+	// XÖáÖÕµã
+	vertices.push_back(10.0f);
+	vertices.push_back(0.0f);
+	vertices.push_back(0.0f);
+
+	// XÖáÖÕµã ·¨ÏòÁ¿
+	vertices.push_back(0.0f);
+	vertices.push_back(0.0f);
+	vertices.push_back(1.0f);
+
+	// YÖá
+	// Æğµã
+	vertices.push_back(0.0f);
+	vertices.push_back(0.0f);
+	vertices.push_back(0.0f);
+
+	// YÖáÆğµã ·¨ÏòÁ¿
+	vertices.push_back(0.0f);
+	vertices.push_back(0.0f);
+	vertices.push_back(1.0f);
+
+	vertices.push_back(0.0f);
+	vertices.push_back(10.0f);
+	vertices.push_back(0.0f);
+
+	// YÖáÖÕµã ·¨ÏòÁ¿
+	vertices.push_back(0.0f);
+	vertices.push_back(0.0f);
+	vertices.push_back(1.0f);
+
+	// ZÖáÆğµã
+	vertices.push_back(0.0f);
+	vertices.push_back(0.0f);
+	vertices.push_back(0.0f);
+
+	// ZÖáÆğµã ·¨ÏòÁ¿
+	vertices.push_back(1.0f);
+	vertices.push_back(0.0f);
+	vertices.push_back(0.0f);
+
+	// ZÖáÖÕµã
+	vertices.push_back(0.0f);
+	vertices.push_back(0.0f);
+	vertices.push_back(10.0f);
+
+	// ZÖáÆğµã ·¨ÏòÁ¿
+	vertices.push_back(1.0f);
+	vertices.push_back(0.0f);
+	vertices.push_back(0.0f);
+}
 
 /*
-	//æŠ•å½±çŸ©é˜µ
+	//Í¶Ó°¾ØÕó
 	QMatrix4x4 projection;
-	projection.perspective(60,  //ç”»é¢è§†é‡çš„è§’åº¦ äººçœ¼åœ¨å¤´éƒ¨ä¸åŠ¨çš„æƒ…å†µä¸‹ï¼Œè§†é‡å¤§æ¦‚ä¸º60Â°
-	(float)width()/height(), //çª—å£æ¯”ä¾‹
-	0.1f,100);//å‚æ•°ä¸‰å’Œå››è¡¨ç¤ºè·ç¦»æ‘„åƒæœºå¤šè¿‘ä¸ªå¤šè¿œèŒƒå›´å†…çš„ç‰©ä½“è¦è¢«æ˜¾ç¤ºã€‚è¶…å‡ºè¿™ä¸ªèŒƒå›´çš„ç‰©ä½“å°†æ— æ³•è¢«æ˜¾ç¤ºã€‚
+	projection.perspective(60,  //»­ÃæÊÓÒ°µÄ½Ç¶È ÈËÑÛÔÚÍ·²¿²»¶¯µÄÇé¿öÏÂ£¬ÊÓÒ°´ó¸ÅÎª60¡ã
+	(float)width()/height(), //´°¿Ú±ÈÀı
+	0.1f,100);//²ÎÊıÈıºÍËÄ±íÊ¾¾àÀëÉãÏñ»ú¶à½ü¸ö¶àÔ¶·¶Î§ÄÚµÄÎïÌåÒª±»ÏÔÊ¾¡£³¬³öÕâ¸ö·¶Î§µÄÎïÌå½«ÎŞ·¨±»ÏÔÊ¾¡£
 */
 void OpenglMathMode::proj()
 {
 	qreal aspect = qreal(viewPortWidth) / qreal(viewPortHeight ? viewPortHeight : 1);
-	const qreal fov = 100.0, zNear = 0.01, zFar = 20;
+	const qreal fov = 100.0, zNear = 0.01, zFar = 25;
 	matrixProjectionx.setToIdentity();
 	matrixProjectionx.perspective(fov, aspect, zNear, zFar);
 }
 
 
 void OpenglMathMode::keyPressEvent(QKeyEvent* keyEvent) {
-	/*
 	switch (keyEvent->key()) {
 	case Qt::Key_Right:
-		camera_pos.setZ(camera_pos.z() + 0.1f);
+		translatex -= 0.1f;
 		break;
 	case Qt::Key_Left:
-		camera_pos.setZ(camera_pos.z() - 0.1f);
+		translatex += 0.1f;
 		break;
 	case Qt::Key_Up:
-		camera_pos.setX(camera_pos.x() + 0.1f);
+		translatey -= 0.1f;
 		break;
 	case Qt::Key_Down:
-		camera_pos.setX(camera_pos.x() - 0.1f);
+		translatey += 0.1f;
 		break;
-	case Qt::Key_Plus:
-		camera_pos.setY(camera_pos.y() + 0.1f);
+	case Qt::Key_W:
+		translatez += 0.1f;
 		break;
-	case Qt::Key_Minus:
-		camera_pos.setY(camera_pos.y() - 0.1f);
+	case Qt::Key_S:
+		translatez -= 0.1f;
 		break;
 	}
-	update();*/
+	update();
 }
 
 void OpenglMathMode::mouseMoveEvent(QMouseEvent* e)
@@ -515,7 +652,7 @@ void OpenglMathMode::mousePressEvent(QMouseEvent* e)
 }
 
 /*
-gl_Position å®ƒå¹¶æ²¡æœ‰ç±»å‹inã€outæˆ–æ˜¯uniformçš„å£°æ˜ï¼Œè€Œæ˜¯ç›´æ¥ä½¿ç”¨ï¼Œä¸”åœ¨åé¢çš„ç¨‹åºä¸­ä¹Ÿæœªè¢«å¼•ç”¨ã€‚åŸæ¥å®ƒæ˜¯é»˜è®¤æ˜¯å½’ä¸€åŒ–çš„è£å‰ªç©ºé—´åæ ‡ï¼Œxyzå„ä¸ªç»´åº¦çš„èŒƒå›´ä¸º - 1åˆ°1ï¼Œä»…èƒ½åœ¨é¡¶ç‚¹ç€è‰²å™¨ä¸­ä½¿ç”¨ï¼Œæ—¢æ˜¯è¾“å…¥ä¹Ÿæ˜¯è¾“å‡ºã€‚gl_Positionèµ‹å€¼èŒƒå›´å°±æ˜¯floatçš„å–å€¼èŒƒå›´(32ä½)ï¼Œåªä¸è¿‡åªæœ‰[-1, 1]åŒºé—´çš„ç‰‡å…ƒè¢«ç»˜åˆ¶ã€‚å®ƒæ˜¯vec4ç±»å‹çš„ï¼Œä¸èƒ½é‡å£°æ˜ä¸ºdvec4ç­‰ç±»å‹ã€‚
-gl_Positionå¯ä»¥é€šè¿‡è§†è§’åˆ’åˆ†è½¬æ¢ä¸ºæ ‡å‡†åŒ–è®¾å¤‡ç©ºé—´ä¸­çš„ç¬›å¡å°”åæ ‡ï¼š
+gl_Position Ëü²¢Ã»ÓĞÀàĞÍin¡¢out»òÊÇuniformµÄÉùÃ÷£¬¶øÊÇÖ±½ÓÊ¹ÓÃ£¬ÇÒÔÚºóÃæµÄ³ÌĞòÖĞÒ²Î´±»ÒıÓÃ¡£Ô­À´ËüÊÇÄ¬ÈÏÊÇ¹éÒ»»¯µÄ²Ã¼ô¿Õ¼ä×ø±ê£¬xyz¸÷¸öÎ¬¶ÈµÄ·¶Î§Îª - 1µ½1£¬½öÄÜÔÚ¶¥µã×ÅÉ«Æ÷ÖĞÊ¹ÓÃ£¬¼ÈÊÇÊäÈëÒ²ÊÇÊä³ö¡£gl_Position¸³Öµ·¶Î§¾ÍÊÇfloatµÄÈ¡Öµ·¶Î§(32Î»)£¬Ö»²»¹ıÖ»ÓĞ[-1, 1]Çø¼äµÄÆ¬Ôª±»»æÖÆ¡£ËüÊÇvec4ÀàĞÍµÄ£¬²»ÄÜÖØÉùÃ÷Îªdvec4µÈÀàĞÍ¡£
+gl_Position¿ÉÒÔÍ¨¹ıÊÓ½Ç»®·Ö×ª»»Îª±ê×¼»¯Éè±¸¿Õ¼äÖĞµÄµÑ¿¨¶û×ø±ê£º
 vec3 ndc = gl_Position.xyz / gl_Position.w;
 */
