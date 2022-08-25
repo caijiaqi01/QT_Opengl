@@ -58,22 +58,26 @@ private:
 	QMatrix4x4 matrixViewx;
 	int btgauche, btdroit, btmilieu, latence;
 
-	//相机位置
-	float cameraDistance = 15.4f;
+	//相机位置 
+	QVector3D camera_pos = { 0.0f, 0.0f, -14.0f };
+	//模型移动矩阵
+	QVector3D translate = { 0.0f, 0.0f, 0.0f };
 	bool mouseLeftDown = false;
 	bool mouseRightDown = false;
 	float mouseY = 0;
 	qreal acc;
 	QVector3D n;
+	//模型旋转矩阵
 	QQuaternion rotation = QQuaternion::fromAxisAndAngle(QVector3D(1.0, 0.0, 0.0), 270) *
 		QQuaternion::fromAxisAndAngle(QVector3D(0.0, 0.0, 1.0), 225) *
 		QQuaternion::fromAxisAndAngle(QVector3D(1.0, -1.0, 0.0), -29);   //旋转矩阵
+	//模型旋转矩阵
+	//QQuaternion rotation = QQuaternion::fromAxisAndAngle(QVector3D(1.0, 0.0, 0.0), 0) *
+	//	QQuaternion::fromAxisAndAngle(QVector3D(0.0, 0.0, 1.0), 0) *
+	//	QQuaternion::fromAxisAndAngle(QVector3D(1.0, -1.0, 0.0), -0);   //旋转矩阵
 	QQuaternion rotationx;
 	QQuaternion rotationy;
 	QQuaternion rotationz;
-	float translatex = 0.0f;
-	float translatey = 0.0f;
-	float translatez = 0.0f;
 	QQuaternion oldRotation = rotation;
 
 	//灯光

@@ -8,30 +8,30 @@
 // 	
 //顶点着色器
 QString vertexShaderSource =
-"#version 330 core\n\
-	layout (location = 0) in vec3 aPos;\n\
-    // varyings (output) 输出给片段着色器\n\
-	varying vec3 esVertex, esNormal;\n\
-	varying vec2 uv; \n\
-	varying vec4 color;\n\
-	varying vec4 v_position;\n\
-	attribute vec3 vertexPosition;\n\
-    attribute vec3 vertexNormal;\n\
-	attribute vec2 uvVertex;\n\
-	attribute vec4 vertexColor;\n\
-	uniform mat4 matrixNormal;\n\
-    uniform mat4 matrixModelView;\n\
-	uniform mat4 matrixModelViewProjection;\n\
-	void main()\n\
-	{\n\
-        esVertex = vec3(matrixModelView * vec4(aPos, 1.0));\n\
-		esNormal = vec3(matrixNormal * vec4(vertexNormal, 1.0)); \n\
-		//color = vertexColor; \n\
-		color = vec4(0.0f, 1.0f, 0.0f, 1.0f); \n\
-		v_position = -matrixModelView * vec4(aPos, 1.0); \n\
-		gl_Position = matrixModelViewProjection * vec4(aPos, 1.0);\n\
-		uv = uvVertex;\n\
-	}";
+R"(#version 330 core
+	layout (location = 0) in vec3 aPos;
+    // varyings (output) 输出给片段着色器
+	varying vec3 esVertex, esNormal;
+	varying vec2 uv;
+	varying vec4 color;
+	varying vec4 v_position;
+	attribute vec3 vertexPosition;
+    attribute vec3 vertexNormal;
+	attribute vec2 uvVertex;
+	attribute vec4 vertexColor;
+	uniform mat4 matrixNormal;
+    uniform mat4 matrixModelView;
+	uniform mat4 matrixModelViewProjection;
+	void main()
+	{
+        esVertex = vec3(matrixModelView * vec4(aPos, 1.0));
+		esNormal = vec3(matrixNormal * vec4(vertexNormal, 1.0));
+		//color = vertexColor;
+		color = vec4(0.0f, 1.0f, 0.0f, 1.0f);
+		v_position = -matrixModelView * vec4(aPos, 1.0);
+		gl_Position = matrixModelViewProjection * vec4(aPos, 1.0);
+		uv = uvVertex;
+	})";
 
 
 //vec4(r, g, b, a), 前三个参数表示片元像素颜色值RGB，第四个参数是片元像素透明度A，1.0表示不透明, 0.0表示完全透明。
@@ -41,87 +41,88 @@ QString vertexShaderSource =
 // gl_FragColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);\n\ (也可使用内置变量修改颜色)
 //片段着色器
 QString fragmentShaderSource =
-"#version 330 core\n\
-out vec4 FragColor;\n\
-#ifdef GL_ES\n\
-precision mediump float;\n\
-precision mediump int;\n\
-#endif\n\
-// uniforms\n\
-uniform vec4 backColor;\n\
-uniform vec4 lightPosition;\n\
-uniform vec4 lightAmbient;\n\
-uniform vec4 lightDiffuse;\n\
-uniform vec4 lightSpecular;\n\
-uniform int hsvactive;\n\
-uniform int thereisRGBA;\n\
-uniform float shininess;\n\
-uniform int glFrontFacing_1;\n\
-// varyings\n\
-varying vec3 esVertex, esNormal;\n\
-varying vec2 uv;\n\
-varying vec4 color;\n\
-varying vec4 v_position;\n\
-// All components are in the range [0…1], including hue.\n\
-uniform sampler2D imgTexture;\n\
-vec3 hsv2rgb(vec3 c)\n\
-{\n\
-	vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);\n\
-	vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);\n\
-	return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);\n\
-}\n\
-void main()\n\
-{\n\
-	vec4 color1=color;\n\
-	vec3 normal = normalize(esNormal);\n\
-	vec3 light;\n\
-	if (lightPosition.w == 0.0)\n\
-	{\n\
-		light = normalize(-lightPosition.xyz);\n\
-	}\n\
-	else\n\
-	{\n\
-		light = normalize(lightPosition.xyz - esVertex);\n\
-	}\n\
-	if (hsvactive == 1)\n\
-		color1 = vec4(hsv2rgb(color1.xyz), color1.w);\n\
-	vec3 view = normalize(-esVertex);\n\
-	vec3 halfv = normalize(light + view);\n\
-	vec4 fragColor = lightAmbient * color1;\n\
-	float dotNL = max(dot(normal, light), 0.0f);\n\
-	fragColor += lightDiffuse * dotNL * color1; // add diffuse\n\
-	float dotNH = max(dot(normal, halfv), 0.0);\n\
-	vec3 LightReflect = normalize(reflect(halfv, normal));\n\
-	float SpecularFactor = dot(vec3(0.0f, 0.0f, 1.0f), -LightReflect);\n\
-	if (SpecularFactor > 0) {\n\
-		SpecularFactor = pow(SpecularFactor, shininess); \n\
-		fragColor += lightSpecular * 1.0f * SpecularFactor; \n\
-	}\n\
-	if (glFrontFacing_1 == 1){ \n\
-		FragColor = vec4(1.0, 0.0f, 0.0f, 1.0f); \n\
-	} \n\
-	else if (glFrontFacing_1 == 2) {\n\
-		FragColor = vec4(0.6f, 0.6f, 0.6f, 1.0f); \n\
-	}\n\
-	else if (glFrontFacing_1 == 3) {\n\
-		FragColor = vec4(1.0f, 0.0f, 0.0f, 1.0f); \n\
-	}\n\
-	else if (glFrontFacing_1 == 4) {\n\
-		FragColor = vec4(0.0f, 1.0f, 0.0f, 1.0f); \n\
-	}\n\
-	else if (glFrontFacing_1 == 5) {\n\
-		FragColor = vec4(0.0f, 0.0f, 1.0f, 1.0f); \n\
-	}\n\
-	else { \n\
-		float back = dot(vec3(0.0f, 0.0f, 1.0f), normal);\n\
-		if (back < 0.0f) {\n\
-			FragColor = vec4(0.0f, 0.6f, 0.0f, 1.0f); \n\
-		}\n\
-		else {\n\
-			FragColor = texture(imgTexture, uv); \n\
-		}\n\
-	} \n\
-}";
+R"(#version 330 core
+out vec4 FragColor;
+#ifdef GL_ES
+precision mediump float;
+precision mediump int;
+#endif
+// uniforms
+uniform vec4 backColor;
+uniform vec4 lightPosition;
+uniform vec4 lightAmbient;
+uniform vec4 lightDiffuse;
+uniform vec4 lightSpecular;
+uniform int hsvactive;
+uniform int thereisRGBA;
+uniform float shininess;
+uniform int glFrontFacing_1;
+// varyings
+varying vec3 esVertex, esNormal;
+varying vec2 uv;
+varying vec4 color;
+varying vec4 v_position;
+// All components are in the range [0…1], including hue.
+uniform sampler2D imgTexture;
+vec3 hsv2rgb(vec3 c)
+{
+	vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+	vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+	return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
+void main()
+{
+	vec4 color1=color;
+	vec3 normal = normalize(esNormal);
+	vec3 light;
+	if (lightPosition.w == 0.0)
+	{
+		light = normalize(-lightPosition.xyz);
+	}
+	else
+	{
+		light = normalize(lightPosition.xyz - esVertex);
+	}
+	if (hsvactive == 1)
+		color1 = vec4(hsv2rgb(color1.xyz), color1.w);
+	vec3 view = normalize(-esVertex);
+	vec3 halfv = normalize(light + view);
+	vec4 fragColor = lightAmbient * color1;
+	float dotNL = max(dot(normal, light), 0.0f);
+	fragColor += lightDiffuse * dotNL * color1; // add diffuse
+	float dotNH = max(dot(normal, halfv), 0.0);
+	vec3 LightReflect = normalize(reflect(halfv, normal));
+	float SpecularFactor = dot(vec3(0.0f, 0.0f, 1.0f), -LightReflect);
+	if (SpecularFactor > 0) {
+		SpecularFactor = pow(SpecularFactor, shininess);
+		fragColor += lightSpecular * 1.0f * SpecularFactor;
+	}
+	if (glFrontFacing_1 == 1){
+		FragColor = vec4(1.0, 0.0f, 0.0f, 1.0f);
+	}
+	else if (glFrontFacing_1 == 2) {
+		FragColor = vec4(0.6f, 0.6f, 0.6f, 1.0f);
+	}
+	else if (glFrontFacing_1 == 3) {
+		FragColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+	}
+	else if (glFrontFacing_1 == 4) {
+		FragColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);
+	}
+	else if (glFrontFacing_1 == 5) {
+		FragColor = vec4(0.0f, 0.0f, 1.0f, 1.0f);
+	}
+	else {
+		float back = dot(vec3(0.0f, 0.0f, 1.0f), normal);
+		if (back < 0.0f) {
+			FragColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);
+		}
+		else {
+			//FragColor = texture(imgTexture, uv);
+			FragColor = fragColor;
+		}
+	}
+})";
 
 OpenglMathMode::OpenglMathMode(QWidget* parent)
 	: QGLWidget(parent)
@@ -195,9 +196,9 @@ void OpenglMathMode::paintGL()
 
 	// set modelview matrix
 	matrixViewx.setToIdentity();
-	matrixViewx.translate(0.0, 0.0, -cameraDistance);
+	matrixViewx.translate(camera_pos);
 	matrixViewx.rotate(rotation);
-	matrixViewx.translate(translatex, translatey, translatez);
+	matrixViewx.translate(translate.x(), translate.y(), translate.z());
 	matrixModelViewProjectionx = matrixProjectionx * matrixViewx;
 	matrixNormalx = matrixViewx;
 	matrixNormalx.setColumn(3, QVector4D(0, 0, 0, 1));
@@ -556,6 +557,13 @@ void OpenglMathMode::setWorldGrid()
 	projection.perspective(60,  //画面视野的角度 人眼在头部不动的情况下，视野大概为60°
 	(float)width()/height(), //窗口比例
 	0.1f,100);//参数三和四表示距离摄像机多近个多远范围内的物体要被显示。超出这个范围的物体将无法被显示。
+
+LookAt函数将顶点的世界空间坐标转换为观察空间坐标，实际上是以相机为原点重新定义的三维空间。
+glm::mat4 LookAt(glm::vec3 pos, glm::vec3 target, glm::vec3 up)
+函数接受三个参数，相机位置pos，目标位置target以及相机上向量up。工作流程是：glm::vec3 zaxis = normalize(pos-target)指向观察空间正Z轴方向，glm::vec3 xaxis = normalize(glm::cross(up, zaxis))指向观察空间正X轴方向，glm::vec3 = glm::cross(zaxis, xaxis)指向观察空间正Y轴方向。
+向上的向量和视线的向量（z轴）确定一个平面，y轴一定在这个平面上。通过这个平面确定左右方向（x轴）。有了z轴、x轴，y轴就确定了。
+走出去，看看月亮。地平线在底部。将头部向左倾斜，地平线向右旋转。向上矢量是你头部的方向
+是。它是任意的，它可以使相机“滚动”，即看起来好像场景围绕眼轴旋转。
 */
 void OpenglMathMode::proj()
 {
@@ -563,28 +571,31 @@ void OpenglMathMode::proj()
 	const qreal fov = 100.0, zNear = 0.01, zFar = 25;
 	matrixProjectionx.setToIdentity();
 	matrixProjectionx.perspective(fov, aspect, zNear, zFar);
+	QVector3D center(0.0, 0.0, 0.0);
+	center.setY(0);
+//	matrixProjectionx.lookAt(camera_pos, center, QVector3D(0.0f, 1.0f, 0.0f));
 }
 
 
 void OpenglMathMode::keyPressEvent(QKeyEvent* keyEvent) {
 	switch (keyEvent->key()) {
 	case Qt::Key_Right:
-		translatex -= 0.1f;
+		translate.setX(translate.x() - 0.1f);
 		break;
 	case Qt::Key_Left:
-		translatex += 0.1f;
+		translate.setX(translate.x() + 0.1f);
 		break;
 	case Qt::Key_Up:
-		translatey -= 0.1f;
+		translate.setY(translate.y() - 0.1f);
 		break;
 	case Qt::Key_Down:
-		translatey += 0.1f;
+		translate.setY(translate.y() + 0.1f);
 		break;
 	case Qt::Key_W:
-		translatez += 0.1f;
+		translate.setZ(translate.z() + 0.1f);
 		break;
 	case Qt::Key_S:
-		translatez -= 0.1f;
+		translate.setZ(translate.z() - 0.1f);
 		break;
 	}
 	update();
@@ -607,7 +618,7 @@ void OpenglMathMode::mouseMoveEvent(QMouseEvent* e)
 	}
 	if (mouseRightDown)
 	{
-		cameraDistance -= (e->pos().y() / 2 - mouseY) * 0.02f;
+		translate.setZ(translate.z() - (e->pos().y() / 2 - mouseY) * 0.02f);
 		mouseY = e->pos().y() / 2;
 	}
 	update();
