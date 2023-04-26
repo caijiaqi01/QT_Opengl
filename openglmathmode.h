@@ -43,6 +43,11 @@ public:
 	void calculatXYZ();
 	void proj();
 	void setWorldGrid();
+	void SelectObject(GLint x, GLint y);
+
+// Ë®ÃæÄ£Äâ
+public:
+
 
 private:
 	Ui::OpenglMathMode* ui;

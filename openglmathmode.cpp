@@ -1,5 +1,6 @@
 #include "openglmathmode.h"
 #include "ui_openglmathmode.h"
+#include <gl/GLU.h>
 #include<sstream>
 #include <cmath>
 
@@ -112,14 +113,21 @@ void main()
 	else if (glFrontFacing_1 == 5) {
 		FragColor = vec4(0.0f, 0.0f, 1.0f, 1.0f);
 	}
+	else if (glFrontFacing_1 == 6) {
+		FragColor = texture(imgTexture, uv);
+	}
 	else {
 		float back = dot(vec3(0.0f, 0.0f, 1.0f), normal);
 		if (back < 0.0f) {
 			FragColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);
 		}
 		else {
-			//FragColor = texture(imgTexture, uv);
-			FragColor = fragColor;
+			if (glFrontFacing_1 == 6) {
+				FragColor = texture(imgTexture, uv);
+			}
+			else {
+				FragColor = fragColor;
+			}
 		}
 	}
 })";
@@ -194,6 +202,9 @@ void OpenglMathMode::paintGL()
 	glViewport(0, 0, viewPortWidth, viewPortHeight);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	int i = 1000;
+	glLoadName(i++);
+	glPushMatrix();
 	// set modelview matrix
 	matrixViewx.setToIdentity();
 	matrixViewx.translate(camera_pos);
@@ -210,9 +221,6 @@ void OpenglMathMode::paintGL()
 	glUniformMatrix4fv(uniformMatrixModelView, 1, false, matrixViewx.data());
 	glUniformMatrix4fv(uniformMatrixModelViewProjection, 1, false, matrixModelViewProjectionx.data());
 	glUniformMatrix4fv(uniformMatrixNormal, 1, false, matrixNormalx.data());
-	//glEnableVertexAttribArray(attribVertexPosition);
-	//// set attrib arrays using glVertexAttribPointer()
-	//glVertexAttribPointer(attribVertexPosition, 3, GL_FLOAT, false, 3 * sizeof(GL_FLOAT), (void*)0);
 
 	shader.enableAttributeArray("uvVertex");
 	shader.enableAttributeArray("vertexNormal");
@@ -229,6 +237,7 @@ void OpenglMathMode::paintGL()
 	// 模型主体绘制
 	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 	glDisable(GL_POLYGON_OFFSET_FILL);
+	glPopMatrix();
 
 	shader.setUniformValue("glFrontFacing_1", 1);
 	// 设置网格线的宽度 
@@ -254,6 +263,37 @@ void OpenglMathMode::paintGL()
 	shader.setUniformValue("glFrontFacing_1", 5);
 	glDrawArrays(GL_LINES, PlanStartIndex + 84, 2);
 
+	glLoadName(i++);
+	glPushMatrix();
+	// set modelview matrix
+	matrixViewx.setToIdentity();
+	matrixViewx.translate(QVector3D(-14.0, 0.0, -14.0));
+	matrixViewx.rotate(rotation);
+	matrixViewx.translate(translate.x(), translate.y(), translate.z());
+	matrixModelViewProjectionx = matrixProjectionx * matrixViewx;
+	matrixNormalx = matrixViewx;
+	matrixNormalx.setColumn(3, QVector4D(0, 0, 0, 1));
+
+	glUniformMatrix4fv(uniformMatrixModelView, 1, false, matrixViewx.data());
+	glUniformMatrix4fv(uniformMatrixModelViewProjection, 1, false, matrixModelViewProjectionx.data());
+	glUniformMatrix4fv(uniformMatrixNormal, 1, false, matrixNormalx.data());
+
+	shader.setUniformValue("glFrontFacing_1", 0);
+	// 多边形偏移
+	glEnable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(1.0f, 1.0f);
+	// 模型主体绘制
+	shader.setUniformValue("glFrontFacing_1", 6);
+	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+	glPopMatrix();
+	glDisable(GL_POLYGON_OFFSET_FILL);
+
+	shader.setUniformValue("glFrontFacing_1", 1);
+	// 设置网格线的宽度 
+	glLineWidth(0.4f);
+	// 模型网格绘制
+	//glDrawElements(GL_LINE_LOOP, indices.size(), GL_UNSIGNED_INT, 0);
+
 	shader.disableAttributeArray("aPos");
 	shader.disableAttributeArray("vertexNormal");
 	shader.disableAttributeArray("uvVertex");
@@ -262,6 +302,66 @@ void OpenglMathMode::paintGL()
 	uvBuffer->release();
 	m_texture->release();
 }
+
+/*
+1. 该物体的名字的数目。一个物体可以有多个名字，你懂的
+2. 该物体被选中区域的最小Z值。我们往往根据这个值得知哪一个才是鼠标点所在的物体
+3. 该物体被选中区域的最大Z值。
+4. 名字
+5. 名字。。
+*/
+
+void OpenglMathMode::SelectObject(GLint x, GLint y)
+{
+	GLuint selectBuff[32] = { 0 };//创建一个保存选择结果的数组    
+	GLint hits, viewport[4];
+	glGetIntegerv(GL_VIEWPORT, viewport); //获得viewport    
+	glSelectBuffer(64, selectBuff); //告诉OpenGL初始化  selectbuffer    
+	 //进入选择模式    
+	glRenderMode(GL_SELECT);
+	glInitNames();  //初始化名字栈    
+	glPushName(-1);  //在名字栈中放入一个初始化名字，这里为‘0’    
+
+	glPushMatrix();   //保存以前的投影矩阵    
+	glMatrixMode(GL_PROJECTION);    //进入投影阶段准备拾取    
+	glLoadIdentity();   //载入单位矩阵    
+	float m[16];
+	glGetFloatv(GL_PROJECTION_MATRIX, m);  //监控当前的投影矩阵 
+	gluPickMatrix(x,           // 设定我们选择框的大小，建立拾取矩阵，就是上面的公式  
+		viewport[3] - y,    // viewport[3]保存的是窗口的高度，窗口坐标转换为OpenGL坐标（OPengl窗口坐标系）   
+		2, 2,              // 选择框的大小为2，2    
+		viewport          // 视口信息，包括视口的起始位置和大小    
+	);
+
+	gluPerspective(
+		100.0, qreal(viewPortWidth) / qreal(viewPortHeight ? viewPortHeight : 1),
+		0.01,
+		25);
+	glGetFloatv(GL_PROJECTION_MATRIX, m);//查看当前的拾取矩阵  
+	//投影处理，并归一化处理
+	glOrtho(-10, 10, -10, 10, -10, 10);     //拾取矩阵乘以投影矩阵，这样就可以让选择框放大为和视体一样大    
+	glGetFloatv(GL_PROJECTION_MATRIX, m);
+
+	glMatrixMode(GL_MODELVIEW);    // 2: GL_SELECT下模型视图变换
+	glLoadIdentity();
+
+	paintGL();
+
+	glPopMatrix();
+
+	hits = glRenderMode(GL_RENDER); // 从选择模式返回正常模式,该函数返回选择到对象的个数
+
+
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();  // 返回正常的投影变换    
+	glGetFloatv(GL_PROJECTION_MATRIX, m);//即还原在选择操作之前的投影变换矩阵 
+	hits = glRenderMode(GL_RENDER); // 从选择模式返回正常模式,该函数返回选择到对象的个数
+	int a = 0;
+	//if (hits > 0)
+	//	processSelect(selectBuff);  //  选择结果处理
+}
+
+
 
 void OpenglMathMode::InitShader()
 {
@@ -321,234 +421,6 @@ void OpenglMathMode::InitBuffer()
 	indexBuffer->allocate(&indices[0], sizeof(int) * indices.size());
 	indexBuffer->setUsagePattern(QGLBuffer::StaticDraw);
 	indexBuffer->release();
-}
-
-
-void OpenglMathMode::calculatXYZ()
-{
-	float Umin = 0.0f;
-	float Umax = 2 * PI; // x,y 坐标参数
-	float Vmin = -PI;
-	float Vmax = PI;     // z 坐标参数
-
-	std::vector<float> valU;
-	std::vector<float> valV;
-	// 网格密度
-	int step = 64;
-
-	// xyz坐标 最大值和最小值差
-	float u_l = Umax - Umin;
-	float v_l = Vmax - Vmin;
-
-	// 将坐标分成若干段进行计算
-	float one_u = u_l / (step - 1);
-	float one_v = v_l / (step - 1);
-	for (unsigned int i = 0; i < step; i++) {
-		float u = Umax - i * one_u;
-		valU.push_back(u);
-
-		float v = Vmax - i * one_v;
-		valV.push_back(v);
-	}
-
-	vertices.resize(step * step * 6);
-	PlanStartIndex = vertices.size() / 6;
-	indices.resize(step * (step - 1) * 6);
-	uvData.resize(step * (step - 1) * 2);
-
-	for (int i = 0; i < step; i++) {
-		for (int j = 0; j < step; j++) {
-			float Fx = cos(valU[j]) * (4 + (19 / 5) * cos(valV[i]));
-			float Fy = sin(valU[j]) * (4 + (19 / 5) * cos(valV[i]));
-			float Fz = (cos(valV[i]) + sin(valV[i]) - 1) * (1 + sin(valV[i])) * log(1 - PI * valV[i] / 10) + (15 / 2) * sin(valV[i]);
-			// 计算顶点坐标
-			vertices[step * 6 * i + j * 6] = Fx;
-			vertices[step * 6 * i + j * 6 + 1] = Fy;
-			vertices[step * 6 * i + j * 6 + 2] = Fz;
-			vertices[step * 6 * i + j * 6 + 3] = 0.0f;
-			vertices[step * 6 * i + j * 6 + 4] = 0.0f;
-			vertices[step * 6 * i + j * 6 + 5] = 0.0f;
-
-			// 计算三角网格
-			if (i < step - 1) {
-				// D C
-				// A B 
-				// 三角形1
-				indices[step * 6 * i + j * 6] = j + step * i;        // A
-				indices[step * 6 * i + j * 6 + 1] = (j + 1) % step + step * i; // B
-				indices[step * 6 * i + j * 6 + 2] = (j + 1) % step + step * i + step; // C
-
-				// 三角形2
-				indices[step * 6 * i + j * 6 + 3] = j + step * i; // A
-				indices[step * 6 * i + j * 6 + 4] = j + step * i + step; // D
-				indices[step * 6 * i + j * 6 + 5] = (j + 1) % step + step * i + step; // C
-
-				// 纹理坐标
-				uvData[step * 2 * i + j * 2] = j * 1.0f / step;			//A.x
-				uvData[step * 2 * i + j * 2 + 1] = i * 1.0f / step;		//A.y
-			}
-		}
-	}
-
-	uint  i, j, deplacement = 6 * step;
-	float caa, bab, cab, baa, ba, ca, b4;
-	for (i = 0; i+1 < step; i++) {
-		for (j = 0; j+1 < step; j++) {
-			/*
-				A
-
-				B    C
-				右手定则得出法向量
-			    AB = A - B
-				BC = B - C	
-			*/
-			caa = vertices[(i + 1) * deplacement + j * 6 + 1] - vertices[i * deplacement + j * 6 + 1]; //y1    A.y - B.y
-			bab = vertices[i * deplacement + j * 6 + 2] - vertices[i * deplacement + (j + 1) * 6 + 2];  //z2   B.z - C.z
-			cab = vertices[(i + 1) * deplacement + j * 6 + 2] - vertices[i * deplacement + j * 6 + 2];  //z1   A.z - B.z
-			baa = vertices[i * deplacement + j * 6 + 1] - vertices[i * deplacement + (j + 1) * 6 + 1];  //y2   B.y - C.y
-			ba = vertices[i * deplacement + j * 6 + 0] - vertices[i * deplacement + (j + 1) * 6 + 0];   //x2   B.x - C.x
-			ca = vertices[(i + 1) * deplacement + j * 6 + 0] - vertices[i * deplacement + j * 6 + 0];   //x1   A.x - B.x
-
-			vertices[i * deplacement + j * 6 + 3] = caa * bab - cab * baa;
-			vertices[i * deplacement + j * 6 + 4] = cab * ba - ca * bab;
-			vertices[i * deplacement + j * 6 + 5] = ca * baa - caa * ba;
-
-			//保证深度方向向外    法线计算有错误，方向反了
-			if (vertices[i * deplacement + j * 6 + 5] < 0)
-			{
-				//vertices[i * deplacement + j * 6 + 3] = -vertices[i * deplacement + j * 6 + 3];
-				//vertices[i * deplacement + j * 6 + 4] = -vertices[i * deplacement + j * 6 + 4];
-				//vertices[i * deplacement + j * 6 + 5] = -vertices[i * deplacement + j * 6 + 5];
-			}
-
-			b4 = sqrt((vertices[i * deplacement + j * 6 + 3] * vertices[i * deplacement + j * 6 + 3]) +
-				(vertices[i * deplacement + j * 6 + 4] * vertices[i * deplacement + j * 6 + 4]) +
-				(vertices[i * deplacement + j * 6 + 5] * vertices[i * deplacement + j * 6 + 5]));
-			if (b4 < float(0.000001))  b4 = float(0.000001);
-			//Normalise:
-			vertices[i * deplacement + j * 6 + 3] /= b4;
-			vertices[i * deplacement + j * 6 + 4] /= b4;
-			vertices[i * deplacement + j * 6 + 5] /= b4;
-/*
-			std::ostringstream oss;
-			oss << vertices[i * deplacement + j * 6 + 3];
-			std::string str(oss.str());
-			normal1.push_back("x:  " + str);
-
-			std::ostringstream oss1;
-			oss1 << vertices[i * deplacement + j * 6 + 4];
-			str = oss1.str();
-			normal1.push_back("y:  " + str);
-
-			std::ostringstream oss2;
-			oss2 << vertices[i * deplacement + j * 6 + 5];
-			str = oss2.str();
-			normal1.push_back("z:  " + str);
-			*/
-		}
-	}
-
-	int a = 0;
-}
-
-void OpenglMathMode::setWorldGrid() 
-{
-	float step = 1.0f;
-	float z = -2.5 * PI;
-	for (int i = 0; i < 20; i++) {
-		vertices.push_back(i * step - 10 * step); // x
-		vertices.push_back(-11 * step ); // y
-		vertices.push_back(z); // z
-
-		vertices.push_back(i * step - 10 * step); // x
-		vertices.push_back(-11 * step - step); // y
-		vertices.push_back(z + 1.0f); // z
-
-		vertices.push_back(i * step - 10 * step); // x
-		vertices.push_back(10 * step); // y
-		vertices.push_back(z); // z
-
-		vertices.push_back(i * step - 10 * step); // x
-		vertices.push_back(10 * step); // y
-		vertices.push_back(z + 1.0f); // z
-
-
-		vertices.push_back(-11 * step); // x
-		vertices.push_back(i * step - 10 * step); // y
-		vertices.push_back(z); // z
-
-		vertices.push_back(-11 * step); // x
-		vertices.push_back(i * step - 10 * step); // y
-		vertices.push_back(z + 1.0f); // z
-
-		vertices.push_back(10 * step); // x
-		vertices.push_back(i * step - 10 * step); // y
-		vertices.push_back(z); // z
-
-		vertices.push_back(10 * step); // x
-		vertices.push_back(i * step - 10 * step); // y
-		vertices.push_back(z + 1.0f); // z
-	}
-
-	// X轴起点
-	vertices.push_back(0.0f);
-	vertices.push_back(0.0f);
-	vertices.push_back(0.0f);
-
-	// X轴起点 法向量
-	vertices.push_back(0.0f);
-	vertices.push_back(0.0f);
-	vertices.push_back(1.0f);
-
-	// X轴终点
-	vertices.push_back(10.0f);
-	vertices.push_back(0.0f);
-	vertices.push_back(0.0f);
-
-	// X轴终点 法向量
-	vertices.push_back(0.0f);
-	vertices.push_back(0.0f);
-	vertices.push_back(1.0f);
-
-	// Y轴
-	// 起点
-	vertices.push_back(0.0f);
-	vertices.push_back(0.0f);
-	vertices.push_back(0.0f);
-
-	// Y轴起点 法向量
-	vertices.push_back(0.0f);
-	vertices.push_back(0.0f);
-	vertices.push_back(1.0f);
-
-	vertices.push_back(0.0f);
-	vertices.push_back(10.0f);
-	vertices.push_back(0.0f);
-
-	// Y轴终点 法向量
-	vertices.push_back(0.0f);
-	vertices.push_back(0.0f);
-	vertices.push_back(1.0f);
-
-	// Z轴起点
-	vertices.push_back(0.0f);
-	vertices.push_back(0.0f);
-	vertices.push_back(0.0f);
-
-	// Z轴起点 法向量
-	vertices.push_back(1.0f);
-	vertices.push_back(0.0f);
-	vertices.push_back(0.0f);
-
-	// Z轴终点
-	vertices.push_back(0.0f);
-	vertices.push_back(0.0f);
-	vertices.push_back(10.0f);
-
-	// Z轴起点 法向量
-	vertices.push_back(1.0f);
-	vertices.push_back(0.0f);
-	vertices.push_back(0.0f);
 }
 
 /*
@@ -633,6 +505,7 @@ void OpenglMathMode::mousePressEvent(QMouseEvent* e)
 {
 	// Save mouse press position
 	mousePressPosition = QVector2D(e->pos());
+	SelectObject(mousePressPosition.x(), mousePressPosition.y());
 	rotation = oldRotation;
 	if (e->button() == Qt::LeftButton)
 	{

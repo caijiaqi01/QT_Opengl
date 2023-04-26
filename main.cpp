@@ -1,10 +1,12 @@
 #include "openglmathmode.h"
+#include "water.h"
 #include <QApplication>
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    OpenglMathMode w;
+	OpenglMathMode w;
+    //OpenGLWidget w;
     w.show();
 
     return a.exec();
